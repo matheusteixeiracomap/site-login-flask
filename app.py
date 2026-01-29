@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import os
+from flask import Flask, render_template, request, redirect, session, flash
+
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta"
@@ -58,8 +60,11 @@ def login():
         if usuario and check_password_hash(usuario[2], senha):
             session["user"] = user
             return redirect("/dashboard")
+        else:
+            flash("Usuário ou senha inválidos", "error")
 
     return render_template("login.html")
+
 
 # ===============================
 # CADASTRO
