@@ -310,4 +310,124 @@ body.dashboard {
 .user-table tr:nth-child(even) {
     background: #fafafa;
 }
+/* ===== LAYOUT ===== */
+.content-wrapper {
+    max-width: 1000px;
+    margin: auto;
+    padding: 30px;
+}
+
+/* HEADER */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.page-header h2 {
+    color: #333;
+}
+
+/* BOTÕES */
+.btn-primary {
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary:hover {
+    background: #4338ca;
+}
+
+.btn-secondary {
+    background: #e5e7eb;
+    color: #333;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+/* CARD */
+.card-box {
+    background: #ffffff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+.card-box h3 {
+    margin-bottom: 15px;
+    color: #444;
+}
+
+/* TABELA */
+.styled-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.styled-table thead {
+    background: #f4f6f9;
+}
+
+.styled-table th,
+.styled-table td {
+    padding: 12px;
+    text-align: left;
+}
+
+.styled-table tbody tr {
+    border-bottom: 1px solid #eee;
+    transition: 0.2s;
+}
+
+.styled-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* BADGES */
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge.admin {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge.user {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* FORM GRID */
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+}
+
+.grid-form input,
+.grid-form select {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.grid-form input:focus,
+.grid-form select:focus {
+    outline: none;
+    border-color: #6366f1;
+}
 
