@@ -477,4 +477,20 @@ body.dashboard {
 .btn-delete:hover {
     color: #991b1b;
 }
+.powerbi-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    border-radius: 12px;
+}
+
+.powerbi-container iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
 
