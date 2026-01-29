@@ -7,51 +7,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body class="dashboard">
+    <div class="dashboard-container">
 
-<div class="dashboard-container">
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <h2>Sistema</h2>
         <nav>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('register_user') }}">👤 Usuários</a>
-            <a href="{{ url_for('logout') }}" class="logout">Sair</a>
+            <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('register_user') }}">👤 Usuários</a>
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
     </aside>
 
+
+    <!-- CONTEÚDO -->
     <main class="content">
 
-        <div class="topbar">
-            <h2>Cadastrar Usuário</h2>
-        </div>
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <h1>Dashboard</h1>
+            <span>👋 Olá, {{ usuario }}</span>
+        </header>
 
-        <div class="panel" style="max-width: 500px;">
+        <!-- CARDS -->
+        <section class="cards">
+            <div class="card">
+                <h3>Usuários</h3>
+                <p>128</p>
+            </div>
 
-            {% if error %}
-                <div class="alert error">{{ error }}</div>
-            {% endif %}
+            <div class="card">
+                <h3>Acessos Hoje</h3>
+                <p>45</p>
+            </div>
 
-            {% if success %}
-                <div class="alert success">{{ success }}</div>
-            {% endif %}
+            <div class="card">
+                <h3>Relatórios</h3>
+                <p>12</p>
+            </div>
 
-            <form method="POST">
-                <input type="text" name="nome" placeholder="Nome completo" required>
-                <input type="email" name="email" placeholder="E-mail" required>
-                <input type="password" name="senha" placeholder="Senha" required>
-                <input type="password" name="confirmar_senha" placeholder="Confirmar senha" required>
+            <div class="card">
+                <h3>Status</h3>
+                <p>Ativo</p>
+            </div>
+        </section>
 
-                <select name="role" required style="width:100%; padding:12px; margin-bottom:12px;">
-                    <option value="user">Usuário</option>
-                    <option value="admin">Administrador</option>
-                </select>
-
-                <button type="submit">Cadastrar</button>
-            </form>
-
-        </div>
+        <!-- CONTEÚDO PRINCIPAL -->
+        <section class="panel">
+            <h2>Bem-vindo ao sistema</h2>
+            <p>Aqui você pode gerenciar usuários, visualizar relatórios e acompanhar métricas.</p>
+        </section>
 
     </main>
 </div>
-</body>
 
+</body>
+</html>
