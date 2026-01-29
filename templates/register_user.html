@@ -5,53 +5,38 @@
     <title>Cadastrar Usuário</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+<body class="page-center">
 
-<body class="dashboard">
+<div class="form-container">
+    <h2>👤 Cadastrar Usuário</h2>
+    <p class="subtitle">Preencha os dados abaixo</p>
 
-<div class="dashboard-container">
+    {% if error %}
+        <div class="alert error">{{ error }}</div>
+    {% endif %}
 
-    <aside class="sidebar">
-        <h2>Sistema</h2>
-        <nav>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('register_user') }}">👤 Usuários</a>
-            <a href="{{ url_for('logout') }}" class="logout">Sair</a>
-        </nav>
-    </aside>
+    {% if success %}
+        <div class="alert success">{{ success }}</div>
+    {% endif %}
 
-    <main class="content">
+    <form method="POST">
+        <input type="text" name="nome" placeholder="Nome completo" required>
+        <input type="text" name="username" placeholder="Usuário" required>
 
-        <div class="topbar">
-            <h2>Cadastrar Usuário</h2>
-        </div>
+        <input type="password" name="senha" placeholder="Senha" required>
+        <input type="password" name="confirmar_senha" placeholder="Confirmar senha" required>
 
-        <div class="panel" style="max-width: 500px;">
+        <select name="role" required>
+            <option value="">Selecione o perfil</option>
+            <option value="admin">Administrador</option>
+            <option value="user">Usuário</option>
+        </select>
 
-            {% if error %}
-                <div class="alert error">{{ error }}</div>
-            {% endif %}
+        <button type="submit">Cadastrar Usuário</button>
+    </form>
 
-            {% if success %}
-                <div class="alert success">{{ success }}</div>
-            {% endif %}
-
-            <form method="POST">
-                <input type="text" name="username" placeholder="Usuário" required>
-                <input type="email" name="email" placeholder="E-mail" required>
-                <input type="password" name="senha" placeholder="Senha" required>
-                <input type="password" name="confirmar_senha" placeholder="Confirmar senha" required>
-
-                <select name="role" required style="width:100%; padding:12px; margin-bottom:12px;">
-                    <option value="user">Usuário</option>
-                    <option value="admin">Administrador</option>
-                </select>
-
-                <button type="submit">Cadastrar</button>
-            </form>
-
-        </div>
-
-    </main>
+    <a class="back-link" href="{{ url_for('dashboard') }}">⬅ Voltar ao Dashboard</a>
 </div>
-</body>
 
+</body>
+</html>
