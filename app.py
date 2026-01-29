@@ -151,9 +151,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-# =========================
-#  START
-# =========================
-if __name__ == '__main__':
+@app.before_first_request
+def setup_database():
     init_db()
-    app.run(debug=True)
