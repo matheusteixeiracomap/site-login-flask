@@ -1,17 +1,13 @@
 from flask import Flask, render_template, request, redirect, session
-import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import os
-
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta"
 
 def get_db():
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
-
-
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -21,8 +17,15 @@ def login():
 
         db = get_db()
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM users WHERE username=?", (user,))
+
+        cursor.execute(
+            "SELECT * FROM users WHERE username=%s",
+            (user,)
+        )
         usuario = cursor.fetchone()
+
+        cursor.close()
+        db.close()
 
         if usuario and check_password_hash(usuario[2], senha):
             session["user"] = user
@@ -38,11 +41,16 @@ def register():
 
         db = get_db()
         cursor = db.cursor()
+
         cursor.execute(
-            "INSERT INTO users (username, password) VALUES (?, ?)",
+            "INSERT INTO users (username, password) VALUES (%s, %s)",
             (user, senha)
         )
         db.commit()
+
+        cursor.close()
+        db.close()
+
         return redirect("/")
 
     return render_template("register.html")
@@ -60,4 +68,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run()
-
