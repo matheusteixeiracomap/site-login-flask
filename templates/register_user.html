@@ -10,24 +10,21 @@
 
 <div class="dashboard-container">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <h2>Sistema</h2>
         <nav>
             <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('register_user') }}">Cadastrar Usuário</a>
+            <a href="{{ url_for('register_user') }}">👤 Usuários</a>
             <a href="{{ url_for('logout') }}" class="logout">Sair</a>
         </nav>
     </aside>
 
-    <!-- CONTEÚDO -->
     <main class="content">
 
         <div class="topbar">
-            <h2>Cadastrar Novo Usuário</h2>
+            <h2>Cadastrar Usuário</h2>
         </div>
 
-        <!-- PAINEL -->
         <div class="panel" style="max-width: 500px;">
 
             {% if error %}
@@ -44,13 +41,17 @@
                 <input type="password" name="senha" placeholder="Senha" required>
                 <input type="password" name="confirmar_senha" placeholder="Confirmar senha" required>
 
-                <button type="submit">Cadastrar Usuário</button>
+                <select name="role" required style="width:100%; padding:12px; margin-bottom:12px;">
+                    <option value="user">Usuário</option>
+                    <option value="admin">Administrador</option>
+                </select>
+
+                <button type="submit">Cadastrar</button>
             </form>
 
         </div>
 
     </main>
 </div>
-
 </body>
-</html>
+
