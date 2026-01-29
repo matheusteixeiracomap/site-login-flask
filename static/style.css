@@ -137,10 +137,11 @@ body.dashboard {
 /* CARDS */
 .cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(0, 100px)); /* card máximo 100px */
+    gap: 10px;
+    margin-bottom: 20px;
 }
+
 
 .card {
     background: white;
