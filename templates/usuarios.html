@@ -7,22 +7,21 @@
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <h2>Sistema</h2>
+            <nav>
+                <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
 
+                {% if session.role == 'admin' %}
+                    <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
 
-     <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <h2>Sistema</h2>
-        <nav>
-            <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+                {% endif %}
 
-            {% if session.role == 'admin' %}
-                <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
-
-            {% endif %}
-
-            <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
-        </nav>
-    </aside>
+                <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
+            </nav>
+        </aside>
+    </div>
 
     <div class="content-wrapper"></div>
     <!-- CARD CONTADOR -->
