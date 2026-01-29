@@ -113,6 +113,35 @@ def dashboard():
 
     return render_template("dashboard.html", usuario=session["user"])
 
+
+
+from flask import session, redirect, url_for
+
+@app.route('/register-user', methods=['GET', 'POST'])
+def register_user():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        nome = request.form['nome']
+        email = request.form['email']
+        senha = request.form['senha']
+        confirmar = request.form['confirmar_senha']
+
+        if senha != confirmar:
+            return render_template(
+                'register_user.html',
+                error='As senhas não conferem'
+            )
+
+        return render_template(
+            'register_user.html',
+            success='Usuário cadastrado com sucesso!'
+        )
+
+    return render_template('register_user.html')
+
+
 # ===============================
 # LOGOUT
 # ===============================
