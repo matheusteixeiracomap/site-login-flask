@@ -1,12 +1,16 @@
 from flask import Flask, render_template, request, redirect, session
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+import psycopg2
+import os
+
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta"
 
 def get_db():
-    return sqlite3.connect("database.db")
+    return psycopg2.connect(os.environ.get("postgresql://ite_login_user:xMer0HjXmCSHUUAADb5wrtWnPDQRT1xk@dpg-d5tkmfvgi27c73f9uiug-a/site_login_7mh8"))
+
 
 @app.route("/", methods=["GET", "POST"])
 def login():

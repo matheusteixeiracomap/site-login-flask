@@ -1,17 +1,18 @@
-import sqlite3
+import psycopg2
+import os
 
-conn = sqlite3.connect('database.db')
+conn = psycopg2.connect(os.environ.get("postgresql://ite_login_user:xMer0HjXmCSHUUAADb5wrtWnPDQRT1xk@dpg-d5tkmfvgi27c73f9uiug-a/site_login_7mh8"))
 cursor = conn.cursor()
 
 cursor.execute("""
-CREATE TABLE users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE,
-    password TEXT
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password TEXT NOT NULL
 )
 """)
 
 conn.commit()
 conn.close()
 
-print("Banco criado com sucesso!")
+print("Tabela criada com sucesso!")
