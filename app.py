@@ -25,10 +25,11 @@ def init_db():
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT NOT NULL,
-                email TEXT UNIQUE NOT NULL,
+                username TEXT UNIQUE NOT NULL,
                 senha TEXT NOT NULL,
                 role TEXT NOT NULL
-            )
+            );
+
         """)
 
         # USUÁRIO ADMIN PADRÃO
@@ -49,13 +50,13 @@ def init_db():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
+        username = request.form['username']
         senha = request.form['senha']
 
         db = get_db()
         user = db.execute(
-            'SELECT * FROM users WHERE email = ?',
-            (email,)
+            'SELECT * FROM users WHERE username = ?',
+            (username,)
         ).fetchone()
 
         if user and check_password_hash(user['senha'], senha):
@@ -64,9 +65,10 @@ def login():
             session['role'] = user['role']
             return redirect(url_for('dashboard'))
 
-        return render_template('login.html', error='E-mail ou senha inválidos')
+        return render_template('login.html', error='Usuário ou senha inválidos')
 
     return render_template('login.html')
+
 
 
 # =========================
