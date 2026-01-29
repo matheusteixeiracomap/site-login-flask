@@ -91,7 +91,27 @@ def usuarios():
     conn = get_db()
     cur = conn.cursor()
 
-    # CADASTRAR USUÁRIO
+    error = None
+    success = None
+
+    # 🔎 BUSCA
+    search = request.args.get('search', '')
+
+    # 🗑️ EXCLUIR
+    if request.args.get('delete'):
+        user_id = request.args.get('delete')
+
+        cur.execute("SELECT role FROM users WHERE id = %s", (user_id,))
+        role = cur.fetchone()
+
+        if role and role[0] == 'admin':
+            error = "Não é permitido excluir o administrador"
+        else:
+            cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
+            conn.commit()
+            success = "Usuário excluído com sucesso!"
+
+    # ➕ CADASTRAR
     if request.method == 'POST':
         nome = request.form.get('nome')
         username = request.form.get('username')
@@ -100,37 +120,33 @@ def usuarios():
         role = request.form.get('role')
 
         if senha != confirmar:
-            cur.execute("SELECT id, nome, username, role FROM users ORDER BY id")
-            usuarios = cur.fetchall()
-            cur.close()
-            conn.close()
-            return render_template(
-                'usuarios.html',
-                usuarios=usuarios,
-                error="As senhas não conferem"
-            )
-
-        try:
-            cur.execute(
-                "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
-                (nome, username, generate_password_hash(senha), role)
-            )
-            conn.commit()
-            success = "Usuário cadastrado com sucesso!"
-        except psycopg2.errors.UniqueViolation:
-            conn.rollback()
-            success = None
-            error = "Usuário já existe"
+            error = "As senhas não conferem"
         else:
-            error = None
+            try:
+                cur.execute(
+                    "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
+                    (nome, username, generate_password_hash(senha), role)
+                )
+                conn.commit()
+                success = "Usuário cadastrado com sucesso!"
+            except psycopg2.errors.UniqueViolation:
+                conn.rollback()
+                error = "Usuário já existe"
 
+    # 📋 LISTAR
+    if search:
+        cur.execute(
+            "SELECT id, nome, username, role FROM users WHERE nome ILIKE %s OR username ILIKE %s ORDER BY id",
+            (f"%{search}%", f"%{search}%")
+        )
     else:
-        success = None
-        error = None
+        cur.execute("SELECT id, nome, username, role FROM users ORDER BY id")
 
-    # LISTAR USUÁRIOS
-    cur.execute("SELECT id, nome, username, role FROM users ORDER BY id")
     usuarios = cur.fetchall()
+
+    # 📊 CONTADOR
+    cur.execute("SELECT COUNT(*) FROM users")
+    total = cur.fetchone()[0]
 
     cur.close()
     conn.close()
@@ -138,9 +154,12 @@ def usuarios():
     return render_template(
         'usuarios.html',
         usuarios=usuarios,
+        total=total,
+        error=error,
         success=success,
-        error=error
+        search=search
     )
+
 
 
 # ================= LOGOUT =================

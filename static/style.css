@@ -430,4 +430,51 @@ body.dashboard {
     outline: none;
     border-color: #6366f1;
 }
+/* CONTADOR */
+.stats-card {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+}
+
+.stats-card p {
+    font-size: 32px;
+    font-weight: bold;
+}
+
+/* BUSCA */
+.search-box {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.search-box button {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #4f46e5;
+    color: white;
+}
+
+/* DELETE */
+.btn-delete {
+    color: #dc2626;
+    font-size: 18px;
+    text-decoration: none;
+}
+
+.btn-delete:hover {
+    color: #991b1b;
+}
 
