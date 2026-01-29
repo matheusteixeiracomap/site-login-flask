@@ -1,13 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
+    <meta charset="UTF-8">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h2>Bem-vindo!</h2>
+    <div class="container">
+        <h2>Dashboard</h2>
 
-    <p>Você está logado.</p>
+        <p style="text-align:center; margin-bottom:20px;">
+            Você está logado com sucesso 🎉
+        </p>
 
-    <a href="/logout">Sair</a>
+        <a href="/logout">
+            <button>Sair</button>
+        </a>
+    </div>
 </body>
 </html>
