@@ -9,7 +9,8 @@ app = Flask(__name__)
 app.secret_key = "chave_super_secreta"
 
 def get_db():
-    return psycopg2.connect(os.environ.get("postgresql://ite_login_user:xMer0HjXmCSHUUAADb5wrtWnPDQRT1xk@dpg-d5tkmfvgi27c73f9uiug-a/site_login_7mh8"))
+    return psycopg2.connect(os.environ.get("DATABASE_URL"))
+
 
 
 @app.route("/", methods=["GET", "POST"])
