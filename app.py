@@ -154,3 +154,4 @@ def logout():
 @app.before_first_request
 def setup_database():
     init_db()
+    
