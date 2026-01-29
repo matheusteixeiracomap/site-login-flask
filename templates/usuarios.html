@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuários</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="container">
+    <h2>👤 Usuários Cadastrados</h2>
+
+    {% if error %}
+        <div class="alert error">{{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+        <div class="alert success">{{ success }}</div>
+    {% endif %}
+
+    <!-- LISTA DE USUÁRIOS -->
+    <table class="user-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Usuário</th>
+                <th>Perfil</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u[0] }}</td>
+                <td>{{ u[1] }}</td>
+                <td>{{ u[2] }}</td>
+                <td>{{ u[3] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- CADASTRAR USUÁRIO -->
+    <h3>➕ Cadastrar novo usuário</h3>
+
+    <form method="POST">
+        <input type="text" name="nome" placeholder="Nome completo" required>
+        <input type="text" name="username" placeholder="Usuário" required>
+        <input type="password" name="senha" placeholder="Senha" required>
+        <input type="password" name="confirmar_senha" placeholder="Confirmar senha" required>
+
+        <select name="role" required>
+            <option value="">Perfil</option>
+            <option value="admin">Administrador</option>
+            <option value="user">Usuário</option>
+        </select>
+
+        <button type="submit">Cadastrar</button>
+    </form>
+
+    <br>
+    <a href="{{ url_for('dashboard') }}">⬅ Voltar ao Dashboard</a>
+</div>
+
+</body>
+</html>

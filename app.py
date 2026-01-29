@@ -84,35 +84,64 @@ def dashboard():
 
 # ================= USUÁRIOS =================
 @app.route('/usuarios', methods=['GET', 'POST'])
-def register_user():
+def usuarios():
     if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('dashboard'))
 
+    conn = get_db()
+    cur = conn.cursor()
+
+    # CADASTRAR USUÁRIO
     if request.method == 'POST':
-        nome = request.form['nome']
-        username = request.form['username']
-        senha = request.form['senha']
-        confirmar = request.form['confirmar_senha']
-        role = request.form['role']
+        nome = request.form.get('nome')
+        username = request.form.get('username')
+        senha = request.form.get('senha')
+        confirmar = request.form.get('confirmar_senha')
+        role = request.form.get('role')
 
         if senha != confirmar:
-            return render_template('register_user.html', error="Senhas não conferem")
+            cur.execute("SELECT id, nome, username, role FROM users ORDER BY id")
+            usuarios = cur.fetchall()
+            cur.close()
+            conn.close()
+            return render_template(
+                'usuarios.html',
+                usuarios=usuarios,
+                error="As senhas não conferem"
+            )
 
         try:
-            conn = get_db()
-            cur = conn.cursor()
             cur.execute(
                 "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
                 (nome, username, generate_password_hash(senha), role)
             )
             conn.commit()
-            cur.close()
-            conn.close()
-            return render_template('register_user.html', success="Usuário cadastrado!")
+            success = "Usuário cadastrado com sucesso!"
         except psycopg2.errors.UniqueViolation:
-            return render_template('register_user.html', error="Usuário já existe")
+            conn.rollback()
+            success = None
+            error = "Usuário já existe"
+        else:
+            error = None
 
-    return render_template('register_user.html')
+    else:
+        success = None
+        error = None
+
+    # LISTAR USUÁRIOS
+    cur.execute("SELECT id, nome, username, role FROM users ORDER BY id")
+    usuarios = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        'usuarios.html',
+        usuarios=usuarios,
+        success=success,
+        error=error
+    )
+
 
 # ================= LOGOUT =================
 @app.route('/logout')
