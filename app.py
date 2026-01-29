@@ -1,28 +1,29 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
+import psycopg2
 import os
 
 app = Flask(__name__)
-app.secret_key = 'chave_super_secreta_123'
-
-DB_NAME = 'database.db'
-
+app.secret_key = os.environ.get("SECRET_KEY", "chave_super_secreta")
 
 # =========================
-#  BANCO DE DADOS
+#  BANCO DE DADOS (POSTGRES)
 # =========================
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+
 def get_db():
-    conn = sqlite3.connect(DB_NAME)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return psycopg2.connect(DATABASE_URL)
 
 
 def init_db():
     conn = get_db()
-    conn.execute("""
+    cur = conn.cursor()
+
+    # TABELA DE USUÁRIOS
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             nome TEXT NOT NULL,
             username TEXT UNIQUE NOT NULL,
             senha TEXT NOT NULL,
@@ -30,20 +31,22 @@ def init_db():
         )
     """)
 
-    admin = conn.execute(
-        "SELECT * FROM users WHERE username = 'admin'"
-    ).fetchone()
+    # ADMIN PADRÃO
+    cur.execute(
+        "SELECT 1 FROM users WHERE username = %s",
+        ('admin',)
+    )
 
-    if not admin:
+    if not cur.fetchone():
         senha_admin = generate_password_hash('admin123')
-        conn.execute(
-            "INSERT INTO users (nome, username, senha, role) VALUES (?, ?, ?, ?)",
+        cur.execute(
+            "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
             ('Administrador', 'admin', senha_admin, 'admin')
         )
 
     conn.commit()
+    cur.close()
     conn.close()
-
 
 
 # =========================
@@ -56,22 +59,25 @@ def login():
         username = request.form['username']
         senha = request.form['senha']
 
-        db = get_db()
-        user = db.execute(
-            'SELECT * FROM users WHERE username = ?',
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT id, nome, senha, role FROM users WHERE username = %s",
             (username,)
-        ).fetchone()
+        )
+        user = cur.fetchone()
+        cur.close()
+        conn.close()
 
-        if user and check_password_hash(user['senha'], senha):
-            session['user_id'] = user['id']
-            session['nome'] = user['nome']
-            session['role'] = user['role']
+        if user and check_password_hash(user[2], senha):
+            session['user_id'] = user[0]
+            session['nome'] = user[1]
+            session['role'] = user[3]
             return redirect(url_for('dashboard'))
 
         return render_template('login.html', error='Usuário ou senha inválidos')
 
     return render_template('login.html')
-
 
 
 # =========================
@@ -98,7 +104,7 @@ def register_user():
 
     if request.method == 'POST':
         nome = request.form['nome']
-        email = request.form['email']
+        username = request.form['username']
         senha = request.form['senha']
         confirmar = request.form['confirmar_senha']
         role = request.form['role']
@@ -112,20 +118,25 @@ def register_user():
         senha_hash = generate_password_hash(senha)
 
         try:
-            db = get_db()
-            db.execute(
-                'INSERT INTO users (nome, email, senha, role) VALUES (?, ?, ?, ?)',
-                (nome, email, senha_hash, role)
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
+                (nome, username, senha_hash, role)
             )
-            db.commit()
+            conn.commit()
+            cur.close()
+            conn.close()
+
             return render_template(
                 'register_user.html',
                 success='Usuário cadastrado com sucesso!'
             )
-        except sqlite3.IntegrityError:
+
+        except psycopg2.errors.UniqueViolation:
             return render_template(
                 'register_user.html',
-                error='E-mail já cadastrado'
+                error='Usuário já existe'
             )
 
     return render_template('register_user.html')
