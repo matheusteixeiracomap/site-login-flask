@@ -6,21 +6,15 @@ import os
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "chave_super_secreta")
 
-# =========================
-#  BANCO DE DADOS (POSTGRES)
-# =========================
 DATABASE_URL = os.environ.get("DATABASE_URL")
-
 
 def get_db():
     return psycopg2.connect(DATABASE_URL)
-
 
 def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # TABELA DE USUÁRIOS
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -31,27 +25,29 @@ def init_db():
         )
     """)
 
-    # ADMIN PADRÃO
-    cur.execute(
-        "SELECT 1 FROM users WHERE username = %s",
-        ('admin',)
-    )
-
+    cur.execute("SELECT 1 FROM users WHERE username = %s", ('admin',))
     if not cur.fetchone():
-        senha_admin = generate_password_hash('admin123')
         cur.execute(
             "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
-            ('Administrador', 'admin', senha_admin, 'admin')
+            (
+                'Administrador',
+                'admin',
+                generate_password_hash('admin123'),
+                'admin'
+            )
         )
 
     conn.commit()
     cur.close()
     conn.close()
 
+# 🔥 EXECUTA NA SUBIDA DO APP
+try:
+    init_db()
+except Exception as e:
+    print("Erro ao iniciar banco:", e)
 
-# =========================
-#  LOGIN
-# =========================
+# ================= LOGIN =================
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -75,31 +71,21 @@ def login():
             session['role'] = user[3]
             return redirect(url_for('dashboard'))
 
-        return render_template('login.html', error='Usuário ou senha inválidos')
+        return render_template('login.html', error="Usuário ou senha inválidos")
 
     return render_template('login.html')
 
-
-# =========================
-#  DASHBOARD
-# =========================
+# ================= DASHBOARD =================
 @app.route('/dashboard')
 def dashboard():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-
     return render_template('dashboard.html')
 
-
-# =========================
-#  CADASTRAR USUÁRIO (ADMIN)
-# =========================
+# ================= USUÁRIOS =================
 @app.route('/usuarios', methods=['GET', 'POST'])
 def register_user():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    if session.get('role') != 'admin':
+    if 'user_id' not in session or session.get('role') != 'admin':
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
@@ -110,48 +96,26 @@ def register_user():
         role = request.form['role']
 
         if senha != confirmar:
-            return render_template(
-                'register_user.html',
-                error='As senhas não conferem'
-            )
-
-        senha_hash = generate_password_hash(senha)
+            return render_template('register_user.html', error="Senhas não conferem")
 
         try:
             conn = get_db()
             cur = conn.cursor()
             cur.execute(
                 "INSERT INTO users (nome, username, senha, role) VALUES (%s, %s, %s, %s)",
-                (nome, username, senha_hash, role)
+                (nome, username, generate_password_hash(senha), role)
             )
             conn.commit()
             cur.close()
             conn.close()
-
-            return render_template(
-                'register_user.html',
-                success='Usuário cadastrado com sucesso!'
-            )
-
+            return render_template('register_user.html', success="Usuário cadastrado!")
         except psycopg2.errors.UniqueViolation:
-            return render_template(
-                'register_user.html',
-                error='Usuário já existe'
-            )
+            return render_template('register_user.html', error="Usuário já existe")
 
     return render_template('register_user.html')
 
-
-# =========================
-#  LOGOUT
-# =========================
+# ================= LOGOUT =================
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('login'))
-
-
-if __name__ == "__main__":
-    init_db()
-    app.run()
-
