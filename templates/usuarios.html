@@ -40,7 +40,6 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Nome</th>
                     <th>Usuário</th>
                     <th>Perfil</th>
                     <th>Ações</th>
@@ -49,7 +48,6 @@
             <tbody>
                 {% for u in usuarios %}
                 <tr>
-                    <td>{{ u[0] }}</td>
                     <td>{{ u[1] }}</td>
                     <td>{{ u[2] }}</td>
                     <td>
@@ -73,10 +71,8 @@
     <div class="card-box">
         <h3>➕ Novo usuário</h3>
         <form method="POST" class="grid-form">
-            <input type="text" name="nome" placeholder="Nome completo" required>
             <input type="text" name="username" placeholder="Usuário" required>
             <input type="password" name="senha" placeholder="Senha" required>
-            <input type="password" name="confirmar_senha" placeholder="Confirmar senha" required>
 
             <select name="role" required>
                 <option value="">Perfil</option>
