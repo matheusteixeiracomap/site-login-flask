@@ -6,9 +6,37 @@ import os
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta"
 
+# ===============================
+# CONEXÃO COM O BANCO
+# ===============================
 def get_db():
     return psycopg2.connect(os.environ.get("DATABASE_URL"))
 
+# ===============================
+# CRIAR TABELA AUTOMATICAMENTE
+# ===============================
+def criar_tabela():
+    db = get_db()
+    cursor = db.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        password TEXT NOT NULL
+    )
+    """)
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+# Executa na inicialização do app
+criar_tabela()
+
+# ===============================
+# LOGIN
+# ===============================
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -33,6 +61,9 @@ def login():
 
     return render_template("login.html")
 
+# ===============================
+# CADASTRO
+# ===============================
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -55,16 +86,25 @@ def register():
 
     return render_template("register.html")
 
+# ===============================
+# DASHBOARD (PROTEGIDO)
+# ===============================
 @app.route("/dashboard")
 def dashboard():
     if "user" not in session:
         return redirect("/")
     return render_template("dashboard.html")
 
+# ===============================
+# LOGOUT
+# ===============================
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/")
 
+# ===============================
+# START
+# ===============================
 if __name__ == "__main__":
     app.run()
