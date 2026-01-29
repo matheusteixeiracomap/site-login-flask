@@ -19,28 +19,31 @@ def get_db():
 
 
 def init_db():
-    if not os.path.exists(DB_NAME):
-        conn = get_db()
-        conn.execute("""
-            CREATE TABLE users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                nome TEXT NOT NULL,
-                username TEXT UNIQUE NOT NULL,
-                senha TEXT NOT NULL,
-                role TEXT NOT NULL
-            );
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome TEXT NOT NULL,
+            username TEXT UNIQUE NOT NULL,
+            senha TEXT NOT NULL,
+            role TEXT NOT NULL
+        )
+    """)
 
-        """)
+    admin = conn.execute(
+        "SELECT * FROM users WHERE username = 'admin'"
+    ).fetchone()
 
-        # USUÁRIO ADMIN PADRÃO
+    if not admin:
         senha_admin = generate_password_hash('admin123')
         conn.execute(
-            "INSERT INTO users (nome, email, senha, role) VALUES (?, ?, ?, ?)",
-            ('Administrador', 'admin@admin.com', senha_admin, 'admin')
+            "INSERT INTO users (nome, username, senha, role) VALUES (?, ?, ?, ?)",
+            ('Administrador', 'admin', senha_admin, 'admin')
         )
 
-        conn.commit()
-        conn.close()
+    conn.commit()
+    conn.close()
+
 
 
 # =========================
