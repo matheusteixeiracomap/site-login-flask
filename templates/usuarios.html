@@ -22,77 +22,78 @@
         </nav>
     </aside>
     
+    <!-- CONTEÚDO -->
+    <main class="content">
+        <div class="content-wrapper"></div>
+        <!-- CARD CONTADOR -->
+        <div class="stats-card">
+            <h3>Total de usuários</h3>
+            <p>{{ total }}</p>
+        </div>
 
-    <div class="content-wrapper"></div>
-    <!-- CARD CONTADOR -->
-    <div class="stats-card">
-        <h3>Total de usuários</h3>
-        <p>{{ total }}</p>
-    </div>
+        {% if error %}
+            <div class="alert error">{{ error }}</div>
+        {% endif %}
+        {% if success %}
+            <div class="alert success">{{ success }}</div>
+        {% endif %}
 
-    {% if error %}
-        <div class="alert error">{{ error }}</div>
-    {% endif %}
-    {% if success %}
-        <div class="alert success">{{ success }}</div>
-    {% endif %}
-
-    <!-- BUSCA -->
-    <form method="GET" class="search-box">
-        <input type="text" name="search" placeholder="Buscar usuário..." value="{{ search }}">
-        <button type="submit">🔍</button>
-    </form>
-
-    <!-- LISTA -->
-    <div class="card-box">
-        <table class="styled-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Usuário</th>
-                    <th>Perfil</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in usuarios %}
-                <tr>
-                    <td>{{ u[1] }}</td>
-                    <td>{{ u[2] }}</td>
-                    <td>
-                        <span class="badge {{ 'admin' if u[3] == 'admin' else 'user' }}">
-                            {{ u[3] }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="?delete={{ u[0] }}" class="btn-delete"
-                           onclick="return confirm('Excluir este usuário?')">
-                            🗑️
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- CADASTRO -->
-    <div class="card-box">
-        <h3>➕ Novo usuário</h3>
-        <form method="POST" class="grid-form">
-            <input type="text" name="username" placeholder="Usuário" required>
-            <input type="password" name="senha" placeholder="Senha" required>
-
-            <select name="role" required>
-                <option value="">Perfil</option>
-                <option value="admin">Administrador</option>
-                <option value="user">Usuário</option>
-            </select>
-
-            <button type="submit" class="btn-primary">Cadastrar</button>
+        <!-- BUSCA -->
+        <form method="GET" class="search-box">
+            <input type="text" name="search" placeholder="Buscar usuário..." value="{{ search }}">
+            <button type="submit">🔍</button>
         </form>
-    </div>
 
+        <!-- LISTA -->
+        <div class="card-box">
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Usuário</th>
+                        <th>Perfil</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in usuarios %}
+                    <tr>
+                        <td>{{ u[1] }}</td>
+                        <td>{{ u[2] }}</td>
+                        <td>
+                            <span class="badge {{ 'admin' if u[3] == 'admin' else 'user' }}">
+                                {{ u[3] }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="?delete={{ u[0] }}" class="btn-delete"
+                            onclick="return confirm('Excluir este usuário?')">
+                                🗑️
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- CADASTRO -->
+        <div class="card-box">
+            <h3>➕ Novo usuário</h3>
+            <form method="POST" class="grid-form">
+                <input type="text" name="username" placeholder="Usuário" required>
+                <input type="password" name="senha" placeholder="Senha" required>
+
+                <select name="role" required>
+                    <option value="">Perfil</option>
+                    <option value="admin">Administrador</option>
+                    <option value="user">Usuário</option>
+                </select>
+
+                <button type="submit" class="btn-primary">Cadastrar</button>
+            </form>
+        </div>
+    </main>    
 </div>
 
 </body>
