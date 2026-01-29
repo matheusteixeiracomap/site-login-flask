@@ -9,11 +9,20 @@
 
 <div class="content-wrapper">
 
-    <!-- HEADER -->
-    <div class="page-header">
-        <h2>👤 Usuários</h2>
-        <a href="{{ url_for('dashboard') }}" class="btn-secondary">⬅ Dashboard</a>
-    </div>
+     <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2>Sistema</h2>
+        <nav>
+            <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
+
+            {% endif %}
+
+            <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
+        </nav>
+    </aside>
 
     <!-- CARD CONTADOR -->
     <div class="stats-card">
