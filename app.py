@@ -240,6 +240,79 @@ def historico_estoque(id):
 
     return render_template("historico_estoque.html", historico=historico)
 
+# ================= CADASTRO DE PRODUTO =================
+@app.route("/estoque/cadastro", methods=["GET", "POST"])
+def cadastro_produto():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if request.method == "POST":
+        produto = request.form["produto"]
+        categoria = request.form["categoria"]
+        quantidade = int(request.form["quantidade"])
+        minimo = int(request.form["minimo"])
+        valor = request.form["valor"]
+        fornecedor = request.form["fornecedor"]
+        nota = request.form["nota_fiscal"]
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO estoque
+            (produto, categoria, quantidade, minimo, valor, fornecedor, nota_fiscal)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+        """, (produto, categoria, quantidade, minimo, valor, fornecedor, nota))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect(url_for("estoque"))
+
+    return render_template("cadastro_produto.html")
+
+
+# ================= ENTRADA DE ESTOQUE =================
+@app.route("/estoque/entrada", methods=["GET", "POST"])
+def entrada_estoque():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        estoque_id = request.form["estoque_id"]
+        quantidade = int(request.form["quantidade"])
+
+        # atualiza estoque
+        cur.execute(
+            "UPDATE estoque SET quantidade = quantidade + %s WHERE id = %s",
+            (quantidade, estoque_id)
+        )
+
+        # histórico
+        cur.execute("""
+            INSERT INTO estoque_mov (estoque_id, tipo, quantidade, usuario)
+            VALUES (%s,%s,%s,%s)
+        """, (estoque_id, "entrada", quantidade, session["nome"]))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return redirect(url_for("estoque"))
+
+    cur.execute("SELECT id, produto FROM estoque ORDER BY produto")
+    produtos = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("entrada_estoque.html", produtos=produtos)
+
+
 # ================= LOGOUT =================
 @app.route("/logout")
 def logout():

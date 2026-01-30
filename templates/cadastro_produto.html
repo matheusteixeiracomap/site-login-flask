@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Cadastro de Produto{% endblock %}
+
+{% block content %}
+<h1>➕ Cadastro de Produto</h1>
+
+<form method="post" class="form-grid">
+    <input name="produto" placeholder="Produto" required>
+    <input name="categoria" placeholder="Categoria">
+
+    <input type="number" name="quantidade" placeholder="Quantidade inicial" required>
+    <input type="number" name="minimo" placeholder="Estoque mínimo" value="0">
+
+    <input type="number" step="0.01" name="valor" placeholder="Valor">
+    <input name="fornecedor" placeholder="Fornecedor">
+    <input name="nota_fiscal" placeholder="Nota Fiscal">
+
+    <button type="submit">Salvar</button>
+</form>
+{% endblock %}
