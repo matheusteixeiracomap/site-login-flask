@@ -14,17 +14,6 @@ def get_db():
 def init_db():
     conn = get_db()
     cur = conn.cursor()
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS estoque (
-            id SERIAL PRIMARY KEY,
-            produto TEXT NOT NULL,
-            categoria TEXT,
-            quantidade INTEGER NOT NULL,
-            minimo INTEGER NOT NULL,
-            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS estoque_mov (
             id SERIAL PRIMARY KEY,
