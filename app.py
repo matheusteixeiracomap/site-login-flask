@@ -29,33 +29,6 @@ def init_db():
         )
     """)
 
-    # ESTOQUE
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS estoque (
-            id SERIAL PRIMARY KEY,
-            produto TEXT NOT NULL,
-            categoria TEXT,
-            quantidade INTEGER NOT NULL DEFAULT 0,
-            minimo INTEGER DEFAULT 0,
-            valor NUMERIC(10,2),
-            fornecedor TEXT,
-            nota_fiscal TEXT,
-            data DATE DEFAULT CURRENT_DATE
-        )
-    """)
-
-    # MOVIMENTAÇÃO
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS estoque_mov (
-            id SERIAL PRIMARY KEY,
-            estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
-            tipo TEXT NOT NULL,
-            quantidade INTEGER NOT NULL,
-            usuario TEXT,
-            data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
     # FUNCIONÁRIOS
     cur.execute("""
         CREATE TABLE IF NOT EXISTS funcionarios (
@@ -69,9 +42,35 @@ def init_db():
         )
     """)
 
+    # ESTOQUE
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS estoque (
+            id SERIAL PRIMARY KEY,
+            produto TEXT NOT NULL,
+            categoria TEXT,
+            quantidade INTEGER DEFAULT 0,
+            minimo INTEGER DEFAULT 0,
+            valor NUMERIC(10,2),
+            fornecedor TEXT,
+            nota_fiscal TEXT,
+            data DATE DEFAULT CURRENT_DATE
+        )
+    """)
+
+    # MOVIMENTAÇÃO DE ESTOQUE
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS estoque_mov (
+            id SERIAL PRIMARY KEY,
+            estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
+            tipo TEXT NOT NULL,
+            quantidade INTEGER NOT NULL,
+            usuario TEXT,
+            data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
 
     # ADMIN PADRÃO
-    cur.execute("SELECT 1 FROM users WHERE username = 'admin'")
+    cur.execute("SELECT 1 FROM users WHERE username='admin'")
     if not cur.fetchone():
         cur.execute(
             "INSERT INTO users (nome, username, senha, role) VALUES (%s,%s,%s,%s)",
@@ -115,15 +114,6 @@ def login():
 
     return render_template("login.html")
 
-
-
-@app.route('/funcionarios', methods=['GET', 'POST'])
-def funcionarios():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    return render_template('funcionarios.html')
-
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
@@ -131,7 +121,7 @@ def dashboard():
         return redirect(url_for("login"))
     return render_template("dashboard.html")
 
-# ================= USUÁRIOS =================
+# ================= USUÁRIOS (ADMIN) =================
 @app.route("/usuarios", methods=["GET", "POST"])
 def usuarios():
     if "user_id" not in session or session.get("role") != "admin":
@@ -167,175 +157,6 @@ def usuarios():
 
     return render_template("usuarios.html", usuarios=usuarios, error=error, success=success)
 
-# ================= ESTOQUE =================
-@app.route("/estoque", methods=["GET", "POST"])
-def estoque():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-        produto = request.form["produto"]
-        categoria = request.form["categoria"]
-        quantidade = int(request.form["quantidade"])
-        minimo = int(request.form["minimo"])
-        valor = request.form["valor"]
-        fornecedor = request.form["fornecedor"]
-        nota = request.form["nota_fiscal"]
-
-        cur.execute("""
-            INSERT INTO estoque (produto, categoria, quantidade, minimo, valor, fornecedor, nota_fiscal)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (produto, categoria, quantidade, minimo, valor, fornecedor, nota))
-
-        conn.commit()
-
-    cur.execute("SELECT * FROM estoque ORDER BY produto")
-    itens = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("estoque.html", itens=itens)
-
-# ================= EDITAR PRODUTO =================
-@app.route("/estoque/editar/<int:id>", methods=["GET", "POST"])
-def editar_estoque(id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = get_db()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-    if request.method == "POST":
-        quantidade = int(request.form["quantidade"])
-        cur.execute("SELECT quantidade FROM estoque WHERE id=%s", (id,))
-        antiga = cur.fetchone()["quantidade"]
-
-        diff = quantidade - antiga
-
-        cur.execute(
-            "UPDATE estoque SET quantidade=%s WHERE id=%s",
-            (quantidade, id)
-        )
-
-        if diff != 0:
-            cur.execute("""
-                INSERT INTO estoque_mov (estoque_id, tipo, quantidade, usuario)
-                VALUES (%s,%s,%s,%s)
-            """, (id, "ajuste", diff, session["nome"]))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-        return redirect(url_for("estoque"))
-
-    cur.execute("SELECT * FROM estoque WHERE id=%s", (id,))
-    item = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    return render_template("editar_estoque.html", item=item)
-
-# ================= HISTÓRICO =================
-@app.route("/estoque/historico/<int:id>")
-def historico_estoque(id):
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT tipo, quantidade, usuario, data
-        FROM estoque_mov
-        WHERE estoque_id=%s
-        ORDER BY data DESC
-    """, (id,))
-
-    historico = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("historico_estoque.html", historico=historico)
-
-# ================= CADASTRO DE PRODUTO =================
-@app.route("/estoque/cadastro", methods=["GET", "POST"])
-def cadastro_produto():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    if request.method == "POST":
-        produto = request.form["produto"]
-        categoria = request.form["categoria"]
-        quantidade = int(request.form["quantidade"])
-        minimo = int(request.form["minimo"])
-        valor = request.form["valor"]
-        fornecedor = request.form["fornecedor"]
-        nota = request.form["nota_fiscal"]
-
-        conn = get_db()
-        cur = conn.cursor()
-
-        cur.execute("""
-            INSERT INTO estoque
-            (produto, categoria, quantidade, minimo, valor, fornecedor, nota_fiscal)
-            VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (produto, categoria, quantidade, minimo, valor, fornecedor, nota))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        return redirect(url_for("estoque"))
-
-    return render_template("cadastro_produto.html")
-
-
-# ================= ENTRADA DE ESTOQUE =================
-@app.route("/estoque/entrada", methods=["GET", "POST"])
-def entrada_estoque():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    if request.method == "POST":
-        estoque_id = request.form["estoque_id"]
-        quantidade = int(request.form["quantidade"])
-
-        # atualiza estoque
-        cur.execute(
-            "UPDATE estoque SET quantidade = quantidade + %s WHERE id = %s",
-            (quantidade, estoque_id)
-        )
-
-        # histórico
-        cur.execute("""
-            INSERT INTO estoque_mov (estoque_id, tipo, quantidade, usuario)
-            VALUES (%s,%s,%s,%s)
-        """, (estoque_id, "entrada", quantidade, session["nome"]))
-
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        return redirect(url_for("estoque"))
-
-    cur.execute("SELECT id, produto FROM estoque ORDER BY produto")
-    produtos = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("entrada_estoque.html", produtos=produtos)
-
-
 # ================= FUNCIONÁRIOS =================
 @app.route("/funcionarios", methods=["GET", "POST"])
 def funcionarios():
@@ -347,7 +168,6 @@ def funcionarios():
 
     error = success = None
 
-    # CADASTRAR
     if request.method == "POST":
         nome = request.form["nome"]
         matricula = request.form["matricula"]
@@ -361,14 +181,12 @@ def funcionarios():
                 (nome, matricula, cargo, setor, data_admissao)
                 VALUES (%s,%s,%s,%s,%s)
             """, (nome, matricula, cargo, setor, data_admissao))
-
             conn.commit()
             success = "Funcionário cadastrado com sucesso!"
         except psycopg2.errors.UniqueViolation:
             conn.rollback()
             error = "Matrícula já cadastrada"
 
-    # LISTAR
     cur.execute("""
         SELECT id, nome, matricula, cargo, setor, data_admissao, ativo
         FROM funcionarios
@@ -386,7 +204,60 @@ def funcionarios():
         success=success
     )
 
+# ================= ESTOQUE =================
+@app.route("/estoque", methods=["GET", "POST"])
+def estoque():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
+    conn = get_db()
+    cur = conn.cursor()
+
+    if request.method == "POST":
+        cur.execute("""
+            INSERT INTO estoque
+            (produto, categoria, quantidade, minimo, valor, fornecedor, nota_fiscal)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            request.form["produto"],
+            request.form["categoria"],
+            request.form["quantidade"],
+            request.form["minimo"],
+            request.form["valor"],
+            request.form["fornecedor"],
+            request.form["nota_fiscal"]
+        ))
+        conn.commit()
+
+    cur.execute("SELECT * FROM estoque ORDER BY produto")
+    itens = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("estoque.html", itens=itens)
+
+# ================= HISTÓRICO ESTOQUE =================
+@app.route("/estoque/historico/<int:id>")
+def historico_estoque(id):
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT tipo, quantidade, usuario, data
+        FROM estoque_mov
+        WHERE estoque_id=%s
+        ORDER BY data DESC
+    """, (id,))
+    historico = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template("historico_estoque.html", historico=historico)
 
 # ================= LOGOUT =================
 @app.route("/logout")
