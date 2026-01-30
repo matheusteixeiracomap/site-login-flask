@@ -18,6 +18,12 @@
 
             {% endif %}
 
+            <a href="{{ url_for('estoque') }}">📦 Estoque</a>
+
+            <a href="{{ url_for('funcionarios') }}">💼 Funcionários</a>
+
+
+
             <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
     </aside>
@@ -26,10 +32,6 @@
     <main class="content">
         <div class="content-wrapper"></div>
         <!-- CARD CONTADOR -->
-        <div class="stats-card">
-            <h3>Total de usuários</h3>
-            <p>{{ total }}</p>
-        </div>
 
         {% if error %}
             <div class="alert error">{{ error }}</div>
@@ -38,11 +40,30 @@
             <div class="alert success">{{ success }}</div>
         {% endif %}
 
+        <!-- CADASTRO -->
+        <div class="card-box">
+            <h3>➕ Novo usuário</h3>
+            <form method="POST" class="grid-form">
+                <input type="text" name="username" placeholder="Usuário" required>
+                <input type="password" name="senha" placeholder="Senha" required>
+
+                <select name="role" required>
+                    <option value="">Perfil</option>
+                    <option value="admin">Administrador</option>
+                    <option value="user">Usuário</option>
+                </select>
+
+                <button type="submit" class="btn-primary">Cadastrar</button>
+            </form>
+        </div>
+
+
         <!-- BUSCA -->
         <form method="GET" class="search-box">
             <input type="text" name="search" placeholder="Buscar usuário..." value="{{ search }}">
             <button type="submit">🔍</button>
         </form>
+
 
         <!-- LISTA -->
         <div class="card-box">
@@ -77,22 +98,7 @@
             </table>
         </div>
 
-        <!-- CADASTRO -->
-        <div class="card-box">
-            <h3>➕ Novo usuário</h3>
-            <form method="POST" class="grid-form">
-                <input type="text" name="username" placeholder="Usuário" required>
-                <input type="password" name="senha" placeholder="Senha" required>
-
-                <select name="role" required>
-                    <option value="">Perfil</option>
-                    <option value="admin">Administrador</option>
-                    <option value="user">Usuário</option>
-                </select>
-
-                <button type="submit" class="btn-primary">Cadastrar</button>
-            </form>
-        </div>
+        
     </main>    
 </div>
 

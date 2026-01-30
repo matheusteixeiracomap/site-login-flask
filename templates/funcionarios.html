@@ -18,6 +18,12 @@
 
             {% endif %}
 
+            <a href="{{ url_for('estoque') }}">📦 Estoque</a>
+
+            <a href="{{ url_for('funcionarios') }}">💼 Funcionários</a>
+
+
+
             <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
     </aside>
@@ -41,7 +47,7 @@
 
             <form method="post" class="form-grid">
                 <input name="nome" placeholder="Nome completo" required>
-                <input name="matricula" placeholder="Matrícula">
+                <input name="CPF" placeholder="Matrícula">
                 <input name="cargo" placeholder="Cargo">
                 <input name="setor" placeholder="Setor">
                 <input type="date" name="data_admissao">

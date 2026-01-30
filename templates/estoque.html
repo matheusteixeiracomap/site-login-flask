@@ -1,67 +1,99 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuários</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2>Sistema</h2>
+        <nav>
+            <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
 
-{% block title %}Estoque{% endblock %}
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
 
-{% block content %}
-<h1>📦 Estoque</h1>
+            {% endif %}
 
-<!-- FORMULÁRIO DE CADASTRO -->
-<div class="panel">
-    <h2>➕ Cadastro de Produto</h2>
+            <a href="{{ url_for('estoque') }}">📦 Estoque</a>
 
-    <form method="post" class="form-grid">
-        <input type="text" name="produto" placeholder="Produto" required>
-        <input type="text" name="categoria" placeholder="Categoria">
+            <a href="{{ url_for('funcionarios') }}">💼 Funcionários</a>
 
-        <input type="number" name="quantidade" placeholder="Quantidade inicial" required>
-        <input type="number" name="minimo" placeholder="Estoque mínimo" value="0">
 
-        <input type="number" step="0.01" name="valor" placeholder="Valor unitário">
-        <input type="text" name="fornecedor" placeholder="Fornecedor">
-        <input type="text" name="nota_fiscal" placeholder="Nota Fiscal">
 
-        <button type="submit">Salvar Produto</button>
-    </form>
-</div>
+            <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
+        </nav>
+    </aside>
+    
+    <!-- CONTEÚDO -->
+    <main class="content">
 
-<hr>
+        {% block title %}Estoque{% endblock %}
 
-<!-- LISTA DE PRODUTOS -->
-<div class="panel">
-    <h2>📋 Produtos Cadastrados</h2>
+        {% block content %}
+        <h1>📦 Estoque</h1>
 
-    {% if itens %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Produto</th>
-                <th>Categoria</th>
-                <th>Quantidade</th>
-                <th>Mínimo</th>
-                <th>Valor</th>
-                <th>Fornecedor</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in itens %}
-            <tr class="{% if item[3] <= item[4] %}alerta{% endif %}">
-                <td>{{ item[1] }}</td>
-                <td>{{ item[2] }}</td>
-                <td>{{ item[3] }}</td>
-                <td>{{ item[4] }}</td>
-                <td>R$ {{ '%.2f'|format(item[5] or 0) }}</td>
-                <td>{{ item[6] or '-' }}</td>
-                <td>
-                    <a href="{{ url_for('editar_estoque', id=item[0]) }}">✏️</a>
-                    <a href="{{ url_for('historico_estoque', id=item[0]) }}">📉</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>Nenhum produto cadastrado.</p>
-    {% endif %}
-</div>
-{% endblock %}
+        <!-- FORMULÁRIO DE CADASTRO -->
+        <div class="panel">
+            <h2>➕ Cadastro de Produto</h2>
+
+            <form method="post" class="form-grid">
+                <input type="text" name="produto" placeholder="Produto" required>
+                <input type="text" name="categoria" placeholder="Categoria">
+
+                <input type="number" name="quantidade" placeholder="Quantidade inicial" required>
+                <input type="number" name="minimo" placeholder="Estoque mínimo" value="0">
+
+                <input type="number" step="0.01" name="valor" placeholder="Valor unitário">
+                <input type="text" name="fornecedor" placeholder="Fornecedor">
+                <input type="text" name="nota_fiscal" placeholder="Nota Fiscal">
+
+                <button type="submit">Salvar Produto</button>
+            </form>
+        </div>
+
+        <hr>
+
+        <!-- LISTA DE PRODUTOS -->
+        <div class="panel">
+            <h2>📋 Produtos Cadastrados</h2>
+
+            {% if itens %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Categoria</th>
+                        <th>Quantidade</th>
+                        <th>Mínimo</th>
+                        <th>Valor</th>
+                        <th>Fornecedor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in itens %}
+                    <tr class="{% if item[3] <= item[4] %}alerta{% endif %}">
+                        <td>{{ item[1] }}</td>
+                        <td>{{ item[2] }}</td>
+                        <td>{{ item[3] }}</td>
+                        <td>{{ item[4] }}</td>
+                        <td>R$ {{ '%.2f'|format(item[5] or 0) }}</td>
+                        <td>{{ item[6] or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('editar_estoque', id=item[0]) }}">✏️</a>
+                            <a href="{{ url_for('historico_estoque', id=item[0]) }}">📉</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p>Nenhum produto cadastrado.</p>
+            {% endif %}
+        </div>
+        {% endblock %}
+    </main>       
