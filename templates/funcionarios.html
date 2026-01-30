@@ -30,7 +30,7 @@
     
     <!-- CONTEÚDO -->
     <main class="content">
-        {% block title %}Funcionários{% endblock %}
+        {% block title %}{% endblock %}
 
         {% block content %}
         <h1>🧑‍💼 Funcionários</h1>
@@ -47,7 +47,7 @@
 
             <form method="post" class="form-grid">
                 <input name="nome" placeholder="Nome completo" required>
-                <input name="CPF" placeholder="Matrícula">
+                <input name="CPF" placeholder="CPF">
                 <input name="cargo" placeholder="Cargo">
                 <input name="setor" placeholder="Setor">
                 <input type="date" name="data_admissao">

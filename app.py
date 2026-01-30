@@ -24,6 +24,7 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
+    # Cria tabela users
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -34,20 +35,21 @@ def init_db():
         )
     """)
 
+    # Cria tabela estoque
     cur.execute("""
         CREATE TABLE IF NOT EXISTS estoque (
             id SERIAL PRIMARY KEY,
             produto TEXT NOT NULL,
             categoria TEXT,
-            quantidade INTEGER NOT NULL DEFAULT 0,
+            quantidade INTEGER DEFAULT 0,
             minimo INTEGER DEFAULT 0,
-            valor NUMERIC(10,2),
+            valor NUMERIC(10,2) DEFAULT 0,
             fornecedor TEXT,
-            nota_fiscal TEXT,
-            data DATE DEFAULT CURRENT_DATE
+            nota_fiscal TEXT
         )
     """)
 
+    # Cria tabela funcionarios
     cur.execute("""
         CREATE TABLE IF NOT EXISTS funcionarios (
             id SERIAL PRIMARY KEY,
@@ -60,6 +62,7 @@ def init_db():
         )
     """)
 
+    # Cria admin se não existir
     cur.execute("SELECT 1 FROM users WHERE username='admin'")
     if not cur.fetchone():
         cur.execute(
@@ -70,6 +73,7 @@ def init_db():
     conn.commit()
     cur.close()
     conn.close()
+
 
 init_db()
 
