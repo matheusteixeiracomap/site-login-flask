@@ -13,7 +13,10 @@
         <h2>Sistema</h2>
         <nav>
             <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
-            <a href="{{ url_for('estoque') }}">📦 Estoque</a>
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
+
+            {% endif %}
             <a href="{{ url_for('funcionarios') }}">💼 Funcionários</a>
             <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
