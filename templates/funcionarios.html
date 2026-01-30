@@ -1,4 +1,13 @@
-<!-- SIDEBAR -->
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuários</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
     <aside class="sidebar">
         <h2>Sistema</h2>
         <nav>
@@ -9,17 +18,10 @@
 
             {% endif %}
 
-            <a href="{{ url_for('estoque') }}">📦 Estoque</a>
-
-            <a href="{{ url_for('funcionarios') }}">🧑‍💼 Funcionários</a>
-
-
-
             <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
     </aside>
-
-
+    
     <!-- CONTEÚDO -->
     <main class="content">
         {% block title %}Funcionários{% endblock %}
