@@ -33,24 +33,32 @@
                     <th>Quantidade</th>
                     <th>Mínimo</th>
                     <th>Status</th>
+                    <th>Ações</th>
+
                 </tr>
             </thead>
             <tbody>
-                {% for i in itens %}
-                <tr class="{% if i[3] <= i[4] %}low-stock{% endif %}">
-                    <td>{{ i[1] }}</td>
-                    <td>{{ i[2] or '-' }}</td>
-                    <td>{{ i[3] }}</td>
-                    <td>{{ i[4] }}</td>
-                    <td>
-                        {% if i[3] <= i[4] %}
-                            <span class="badge admin">Baixo</span>
-                        {% else %}
-                            <span class="badge user">OK</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
+            {% for i in itens %}
+            <tr class="{% if i[3] <= i[4] %}low-stock{% endif %}">
+                <td>{{ i[1] }}</td>
+                <td>{{ i[2] or '-' }}</td>
+                <td>{{ i[3] }}</td>
+                <td>{{ i[4] }}</td>
+                <td>
+                    {% if i[3] <= i[4] %}
+                        <span class="badge admin">Baixo</span>
+                    {% else %}
+                        <span class="badge user">OK</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('editar_produto', id=i[0]) }}">✏️</a>
+                    <a href="{{ url_for('historico_estoque', id=i[0]) }}">📉</a>
+                    <a href="{{ url_for('excluir_produto', id=i[0]) }}"
+                    onclick="return confirm('Excluir este produto?')">🗑️</a>
+                </td>
+            </tr>
+            {% endfor %}
             </tbody>
         </table>
     </div>

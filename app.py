@@ -25,6 +25,16 @@ def init_db():
             data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS estoque_mov (
+            id SERIAL PRIMARY KEY,
+            estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
+            tipo TEXT NOT NULL, -- entrada / saida / ajuste
+            quantidade INTEGER NOT NULL,
+            data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
 
 
     cur.execute("SELECT 1 FROM users WHERE username = %s", ('admin',))
@@ -162,54 +172,86 @@ def usuarios():
         search=search
     )
 
-@app.route('/estoque', methods=['GET', 'POST'])
-def estoque():
+@app.route('/estoque/editar/<int:id>', methods=['GET', 'POST'])
+def editar_produto(id):
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     conn = get_db()
     cur = conn.cursor()
 
-    error = None
-    success = None
-
-    # ➕ CADASTRAR PRODUTO
     if request.method == 'POST':
         produto = request.form.get('produto')
         categoria = request.form.get('categoria')
-        quantidade = request.form.get('quantidade')
-        minimo = request.form.get('minimo')
+        quantidade = int(request.form.get('quantidade'))
+        minimo = int(request.form.get('minimo'))
 
-        if not produto or not quantidade or not minimo:
-            error = "Preencha os campos obrigatórios"
-        else:
-            cur.execute(
-                """
-                INSERT INTO estoque (produto, categoria, quantidade, minimo)
-                VALUES (%s, %s, %s, %s)
-                """,
-                (produto, categoria, quantidade, minimo)
-            )
-            conn.commit()
-            success = "Produto cadastrado com sucesso!"
+        # quantidade anterior
+        cur.execute("SELECT quantidade FROM estoque WHERE id = %s", (id,))
+        qtd_antiga = cur.fetchone()[0]
 
-    # 📋 LISTAR ESTOQUE
-    cur.execute("""
-        SELECT id, produto, categoria, quantidade, minimo
-        FROM estoque
-        ORDER BY produto
-    """)
-    itens = cur.fetchall()
+        cur.execute("""
+            UPDATE estoque
+            SET produto=%s, categoria=%s, quantidade=%s, minimo=%s
+            WHERE id=%s
+        """, (produto, categoria, quantidade, minimo, id))
+
+        # histórico (ajuste)
+        diff = quantidade - qtd_antiga
+        if diff != 0:
+            cur.execute("""
+                INSERT INTO estoque_mov (estoque_id, tipo, quantidade)
+                VALUES (%s, %s, %s)
+            """, (id, 'ajuste', diff))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        return redirect(url_for('estoque'))
+
+    cur.execute("SELECT * FROM estoque WHERE id = %s", (id,))
+    item = cur.fetchone()
 
     cur.close()
     conn.close()
+    return render_template('editar_estoque.html', item=item)
 
-    return render_template(
-        'estoque.html',
-        itens=itens,
-        error=error,
-        success=success
-    )
+@app.route('/estoque/excluir/<int:id>')
+def excluir_produto(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM estoque WHERE id = %s", (id,))
+    conn.commit()
+
+    cur.close()
+    conn.close()
+    return redirect(url_for('estoque'))
+
+@app.route('/estoque/historico/<int:id>')
+def historico_estoque(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT e.produto, m.tipo, m.quantidade, m.data
+        FROM estoque_mov m
+        JOIN estoque e ON e.id = m.estoque_id
+        WHERE e.id = %s
+        ORDER BY m.data DESC
+    """, (id,))
+    historico = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return render_template('historico_estoque.html', historico=historico)
+
 
 
 # ================= LOGOUT =================
