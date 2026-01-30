@@ -116,6 +116,7 @@ def login():
     return render_template("login.html")
 
 
+
 @app.route('/funcionarios', methods=['GET', 'POST'])
 def funcionarios():
     if 'user_id' not in session:
