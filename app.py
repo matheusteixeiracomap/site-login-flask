@@ -38,15 +38,13 @@ def init_db():
         )
     """)
 
-    # MOVIMENTAÇÃO
+    # MOVIMENTAÇÃO (estrutura base)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS estoque_mov (
             id SERIAL PRIMARY KEY,
             estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
             tipo TEXT NOT NULL,
             quantidade INTEGER NOT NULL,
-            usuario_destino INTEGER REFERENCES users(id),
-            usuario_registro INTEGER REFERENCES users(id),
             data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
@@ -68,8 +66,53 @@ def init_db():
     cur.close()
     conn.close()
 
+# ================= MIGRAÇÃO AUTOMÁTICA =================
+def migrate_db():
+    conn = get_db()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+            ALTER TABLE estoque_mov
+            ADD COLUMN IF NOT EXISTS usuario_destino INTEGER
+        """)
+    except:
+        pass
+
+    try:
+        cur.execute("""
+            ALTER TABLE estoque_mov
+            ADD COLUMN IF NOT EXISTS usuario_registro INTEGER
+        """)
+    except:
+        pass
+
+    try:
+        cur.execute("""
+            ALTER TABLE estoque_mov
+            ADD CONSTRAINT fk_destino
+            FOREIGN KEY (usuario_destino) REFERENCES users(id)
+        """)
+    except:
+        pass
+
+    try:
+        cur.execute("""
+            ALTER TABLE estoque_mov
+            ADD CONSTRAINT fk_registro
+            FOREIGN KEY (usuario_registro) REFERENCES users(id)
+        """)
+    except:
+        pass
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+# 🔥 EXECUTA NA SUBIDA DO APP (RENDER FREE)
 try:
     init_db()
+    migrate_db()
 except Exception as e:
     print("Erro DB:", e)
 
@@ -116,7 +159,6 @@ def usuarios():
 
     conn = get_db()
     cur = conn.cursor()
-
     error = success = None
     search = request.args.get('search', '')
 
@@ -131,20 +173,19 @@ def usuarios():
             success = "Usuário excluído"
 
     if request.method == 'POST':
-        nome = request.form['nome']
-        username = request.form['username']
-        senha = request.form['senha']
-        confirmar = request.form['confirmar_senha']
-        role = request.form['role']
-
-        if senha != confirmar:
+        if request.form['senha'] != request.form['confirmar_senha']:
             error = "As senhas não conferem"
         else:
             try:
                 cur.execute("""
                     INSERT INTO users (nome, username, senha, role)
                     VALUES (%s, %s, %s, %s)
-                """, (nome, username, generate_password_hash(senha), role))
+                """, (
+                    request.form['nome'],
+                    request.form['username'],
+                    generate_password_hash(request.form['senha']),
+                    request.form['role']
+                ))
                 conn.commit()
                 success = "Usuário cadastrado"
             except psycopg2.errors.UniqueViolation:
@@ -162,17 +203,12 @@ def usuarios():
         cur.execute("SELECT id, nome, username, role FROM users ORDER BY nome")
 
     usuarios = cur.fetchall()
-
-    cur.execute("SELECT COUNT(*) FROM users")
-    total = cur.fetchone()[0]
-
     cur.close()
     conn.close()
 
     return render_template(
         'usuarios.html',
         usuarios=usuarios,
-        total=total,
         error=error,
         success=success,
         search=search
@@ -230,7 +266,9 @@ def editar_produto(id):
             destino = int(request.form['usuario_destino'])
 
             cur.execute("""
-                UPDATE estoque SET quantidade = quantidade - %s WHERE id=%s
+                UPDATE estoque
+                SET quantidade = quantidade - %s
+                WHERE id=%s
             """, (qtd, id))
 
             cur.execute("""
