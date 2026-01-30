@@ -2,13 +2,16 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 import os
+from datetime import date
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "chave_super_secreta")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# ================= BANCO =================
+# ===============================
+# CONEXÃO COM BANCO
+# ===============================
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
@@ -16,7 +19,7 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # USERS
+    # USUÁRIOS
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -27,30 +30,23 @@ def init_db():
         )
     """)
 
-    # ESTOQUE
+    # ESTOQUE (ATUALIZADO)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS estoque (
             id SERIAL PRIMARY KEY,
             produto TEXT NOT NULL,
             categoria TEXT,
-            quantidade INTEGER NOT NULL DEFAULT 0,
-            minimo INTEGER NOT NULL DEFAULT 0
-        )
-    """)
-
-    # MOVIMENTAÇÃO (estrutura base)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS estoque_mov (
-            id SERIAL PRIMARY KEY,
-            estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
-            tipo TEXT NOT NULL,
-            quantidade INTEGER NOT NULL,
-            data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            quantidade INTEGER DEFAULT 0,
+            minimo INTEGER DEFAULT 0,
+            valor NUMERIC(10,2),
+            data_entrada DATE,
+            fornecedor TEXT,
+            nota_fiscal TEXT
         )
     """)
 
     # ADMIN PADRÃO
-    cur.execute("SELECT 1 FROM users WHERE username=%s", ('admin',))
+    cur.execute("SELECT 1 FROM users WHERE username = %s", ('admin',))
     if not cur.fetchone():
         cur.execute("""
             INSERT INTO users (nome, username, senha, role)
@@ -66,55 +62,10 @@ def init_db():
     cur.close()
     conn.close()
 
-# ================= MIGRAÇÃO AUTOMÁTICA =================
-def migrate_db():
-    conn = get_db()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("""
-            ALTER TABLE estoque_mov
-            ADD COLUMN IF NOT EXISTS usuario_destino INTEGER
-        """)
-    except:
-        pass
-
-    try:
-        cur.execute("""
-            ALTER TABLE estoque_mov
-            ADD COLUMN IF NOT EXISTS usuario_registro INTEGER
-        """)
-    except:
-        pass
-
-    try:
-        cur.execute("""
-            ALTER TABLE estoque_mov
-            ADD CONSTRAINT fk_destino
-            FOREIGN KEY (usuario_destino) REFERENCES users(id)
-        """)
-    except:
-        pass
-
-    try:
-        cur.execute("""
-            ALTER TABLE estoque_mov
-            ADD CONSTRAINT fk_registro
-            FOREIGN KEY (usuario_registro) REFERENCES users(id)
-        """)
-    except:
-        pass
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-# 🔥 EXECUTA NA SUBIDA DO APP (RENDER FREE)
 try:
     init_db()
-    migrate_db()
 except Exception as e:
-    print("Erro DB:", e)
+    print("Erro ao iniciar banco:", e)
 
 # ================= LOGIN =================
 @app.route('/', methods=['GET', 'POST'])
@@ -127,7 +78,7 @@ def login():
         conn = get_db()
         cur = conn.cursor()
         cur.execute(
-            "SELECT id, nome, senha, role FROM users WHERE username=%s",
+            "SELECT id, nome, senha, role FROM users WHERE username = %s",
             (username,)
         )
         user = cur.fetchone()
@@ -151,195 +102,88 @@ def dashboard():
         return redirect(url_for('login'))
     return render_template('dashboard.html')
 
-# ================= USUÁRIOS =================
-@app.route('/usuarios', methods=['GET', 'POST'])
-def usuarios():
-    if 'user_id' not in session or session.get('role') != 'admin':
-        return redirect(url_for('dashboard'))
-
-    conn = get_db()
-    cur = conn.cursor()
-    error = success = None
-    search = request.args.get('search', '')
-
-    if request.args.get('delete'):
-        uid = request.args.get('delete')
-        cur.execute("SELECT role FROM users WHERE id=%s", (uid,))
-        if cur.fetchone()[0] == 'admin':
-            error = "Não é permitido excluir o admin"
-        else:
-            cur.execute("DELETE FROM users WHERE id=%s", (uid,))
-            conn.commit()
-            success = "Usuário excluído"
-
-    if request.method == 'POST':
-        if request.form['senha'] != request.form['confirmar_senha']:
-            error = "As senhas não conferem"
-        else:
-            try:
-                cur.execute("""
-                    INSERT INTO users (nome, username, senha, role)
-                    VALUES (%s, %s, %s, %s)
-                """, (
-                    request.form['nome'],
-                    request.form['username'],
-                    generate_password_hash(request.form['senha']),
-                    request.form['role']
-                ))
-                conn.commit()
-                success = "Usuário cadastrado"
-            except psycopg2.errors.UniqueViolation:
-                conn.rollback()
-                error = "Usuário já existe"
-
-    if search:
-        cur.execute("""
-            SELECT id, nome, username, role
-            FROM users
-            WHERE nome ILIKE %s OR username ILIKE %s
-            ORDER BY nome
-        """, (f"%{search}%", f"%{search}%"))
-    else:
-        cur.execute("SELECT id, nome, username, role FROM users ORDER BY nome")
-
-    usuarios = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    return render_template(
-        'usuarios.html',
-        usuarios=usuarios,
-        error=error,
-        success=success,
-        search=search
-    )
-
-# ================= ESTOQUE =================
-@app.route('/estoque', methods=['GET', 'POST'])
+# ================= ESTOQUE (MENU) =================
+@app.route('/estoque')
 def estoque():
     if 'user_id' not in session:
         return redirect(url_for('login'))
+    return render_template('estoque.html')
 
-    conn = get_db()
-    cur = conn.cursor()
+# ================= CADASTRO DE PRODUTO =================
+@app.route('/estoque/cadastro', methods=['GET', 'POST'])
+def cadastro_produto():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
 
     if request.method == 'POST':
+        produto = request.form.get('produto')
+        categoria = request.form.get('categoria')
+        quantidade = int(request.form.get('quantidade'))
+        minimo = int(request.form.get('minimo') or 0)
+        valor = request.form.get('valor')
+        data_entrada = request.form.get('data_entrada') or date.today()
+        fornecedor = request.form.get('fornecedor')
+        nota_fiscal = request.form.get('nota_fiscal')
+
+        conn = get_db()
+        cur = conn.cursor()
         cur.execute("""
-            INSERT INTO estoque (produto, categoria, quantidade, minimo)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO estoque
+            (produto, categoria, quantidade, minimo, valor, data_entrada, fornecedor, nota_fiscal)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            request.form['produto'],
-            request.form['categoria'],
-            int(request.form['quantidade']),
-            int(request.form['minimo'])
+            produto,
+            categoria,
+            quantidade,
+            minimo,
+            valor,
+            data_entrada,
+            fornecedor,
+            nota_fiscal
         ))
         conn.commit()
+        cur.close()
+        conn.close()
 
-    cur.execute("""
-        SELECT id, produto, categoria, quantidade, minimo
-        FROM estoque ORDER BY produto
-    """)
-    itens = cur.fetchall()
+        return redirect(url_for('estoque'))
 
-    cur.close()
-    conn.close()
-    return render_template('estoque.html', itens=itens)
+    return render_template('cadastro_produto.html')
 
-# ================= EDITAR / SAÍDA =================
-@app.route('/estoque/editar/<int:id>', methods=['GET', 'POST'])
-def editar_produto(id):
+# ================= ENTRADA DE ESTOQUE =================
+@app.route('/estoque/entrada', methods=['GET', 'POST'])
+def entrada_estoque():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
     conn = get_db()
     cur = conn.cursor()
 
-    cur.execute("SELECT * FROM estoque WHERE id=%s", (id,))
-    item = cur.fetchone()
-
-    cur.execute("SELECT id, nome FROM users ORDER BY nome")
-    usuarios = cur.fetchall()
-
     if request.method == 'POST':
-        if request.form.get('acao') == 'saida':
-            qtd = int(request.form['quantidade_saida'])
-            destino = int(request.form['usuario_destino'])
+        produto_id = request.form.get('produto_id')
+        quantidade = int(request.form.get('quantidade'))
 
-            cur.execute("""
-                UPDATE estoque
-                SET quantidade = quantidade - %s
-                WHERE id=%s
-            """, (qtd, id))
-
-            cur.execute("""
-                INSERT INTO estoque_mov
-                (estoque_id, tipo, quantidade, usuario_destino, usuario_registro)
-                VALUES (%s, 'saida', %s, %s, %s)
-            """, (id, qtd, destino, session['user_id']))
-
-        else:
-            cur.execute("""
-                UPDATE estoque
-                SET produto=%s, categoria=%s, quantidade=%s, minimo=%s
-                WHERE id=%s
-            """, (
-                request.form['produto'],
-                request.form['categoria'],
-                int(request.form['quantidade']),
-                int(request.form['minimo']),
-                id
-            ))
+        cur.execute("""
+            UPDATE estoque
+            SET quantidade = quantidade + %s
+            WHERE id = %s
+        """, (quantidade, produto_id))
 
         conn.commit()
         cur.close()
         conn.close()
         return redirect(url_for('estoque'))
 
-    cur.close()
-    conn.close()
-    return render_template('editar_estoque.html', item=item, usuarios=usuarios)
-
-# ================= HISTÓRICO =================
-@app.route('/estoque/historico/<int:id>')
-def historico_estoque(id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_db()
-    cur = conn.cursor()
-
     cur.execute("""
-        SELECT
-            m.tipo,
-            m.quantidade,
-            u.nome,
-            ur.nome,
-            m.data
-        FROM estoque_mov m
-        LEFT JOIN users u ON u.id = m.usuario_destino
-        LEFT JOIN users ur ON ur.id = m.usuario_registro
-        WHERE m.estoque_id=%s
-        ORDER BY m.data DESC
-    """, (id,))
-    historico = cur.fetchall()
+        SELECT id, produto, quantidade
+        FROM estoque
+        ORDER BY produto
+    """)
+    produtos = cur.fetchall()
 
     cur.close()
     conn.close()
-    return render_template('historico_estoque.html', historico=historico)
 
-# ================= EXCLUIR =================
-@app.route('/estoque/excluir/<int:id>')
-def excluir_produto(id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM estoque WHERE id=%s", (id,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    return redirect(url_for('estoque'))
+    return render_template('entrada_estoque.html', produtos=produtos)
 
 # ================= LOGOUT =================
 @app.route('/logout')
