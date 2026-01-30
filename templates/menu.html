@@ -1,0 +1,19 @@
+<aside class="sidebar">
+    <h2>Sistema</h2>
+
+    <nav>
+        <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
+        <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
+
+        <div class="menu-group">
+            <span class="menu-title">📦 Estoque</span>
+            <a href="{{ url_for('estoque') }}" class="submenu">📋 Visão geral</a>
+            <a href="{{ url_for('cadastro_produto') }}" class="submenu">➕ Cadastro de produto</a>
+            <a href="{{ url_for('entrada_estoque') }}" class="submenu">⬆️ Entrada</a>
+        </div>
+
+        <hr>
+
+        <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
+    </nav>
+</aside>
