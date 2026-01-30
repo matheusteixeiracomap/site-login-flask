@@ -35,7 +35,7 @@ def init_db():
         )
     """)
 
-    # Cria tabela estoque
+    # Cria tabela estoque com a coluna valor
     cur.execute("""
         CREATE TABLE IF NOT EXISTS estoque (
             id SERIAL PRIMARY KEY,
@@ -73,6 +73,7 @@ def init_db():
     conn.commit()
     cur.close()
     conn.close()
+
 
 
 init_db()
