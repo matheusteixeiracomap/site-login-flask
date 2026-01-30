@@ -1,68 +1,107 @@
-{% extends 'base.html' %}
-{% block title %}Funcionários{% endblock %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body class="dashboard">
+    <div class="dashboard-container">
 
-{% block content %}
-<h1>🧑‍💼 Funcionários</h1>
 
-{% if error %}
-<div class="alert error">{{ error }}</div>
-{% endif %}
-{% if success %}
-<div class="alert success">{{ success }}</div>
-{% endif %}
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <h2>Sistema</h2>
+        <nav>
+            <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
 
-<div class="panel">
-    <h2>➕ Cadastrar Funcionário</h2>
+            {% if session.role == 'admin' %}
+                <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
 
-    <form method="post" class="form-grid">
-        <input name="nome" placeholder="Nome completo" required>
-        <input name="matricula" placeholder="Matrícula">
-        <input name="cargo" placeholder="Cargo">
-        <input name="setor" placeholder="Setor">
-        <input type="date" name="data_admissao">
+            {% endif %}
 
-        <button type="submit">Salvar</button>
-    </form>
+            <a href="{{ url_for('estoque') }}">📦 Estoque</a>
+
+            <a href="{{ url_for('funcionarios') }}">🧑‍💼 Funcionários</a>
+
+
+
+            <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
+        </nav>
+    </aside>
+
+
+    <!-- CONTEÚDO -->
+    <main class="content">
+
+        {% block content %}
+        <h1>🧑‍💼 Funcionários</h1>
+
+        {% if error %}
+        <div class="alert error">{{ error }}</div>
+        {% endif %}
+        {% if success %}
+        <div class="alert success">{{ success }}</div>
+        {% endif %}
+
+        <div class="panel">
+            <h2>➕ Cadastrar Funcionário</h2>
+
+            <form method="post" class="form-grid">
+                <input name="nome" placeholder="Nome completo" required>
+                <input name="matricula" placeholder="Matrícula">
+                <input name="cargo" placeholder="Cargo">
+                <input name="setor" placeholder="Setor">
+                <input type="date" name="data_admissao">
+
+                <button type="submit">Salvar</button>
+            </form>
+        </div>
+
+        <hr>
+
+        <div class="panel">
+            <h2>📋 Funcionários Cadastrados</h2>
+
+            {% if funcionarios %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Matrícula</th>
+                        <th>Cargo</th>
+                        <th>Setor</th>
+                        <th>Admissão</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in funcionarios %}
+                    <tr>
+                        <td>{{ f[1] }}</td>
+                        <td>{{ f[2] or '-' }}</td>
+                        <td>{{ f[3] or '-' }}</td>
+                        <td>{{ f[4] or '-' }}</td>
+                        <td>{{ f[5].strftime('%d/%m/%Y') if f[5] else '-' }}</td>
+                        <td>
+                            {% if f[6] %}
+                                ✅ Ativo
+                            {% else %}
+                                ❌ Inativo
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+                <p>Nenhum funcionário cadastrado.</p>
+            {% endif %}
+        </div>
+ </main>
 </div>
 
-<hr>
+</body>
+</html>
 
-<div class="panel">
-    <h2>📋 Funcionários Cadastrados</h2>
-
-    {% if funcionarios %}
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Matrícula</th>
-                <th>Cargo</th>
-                <th>Setor</th>
-                <th>Admissão</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for f in funcionarios %}
-            <tr>
-                <td>{{ f[1] }}</td>
-                <td>{{ f[2] or '-' }}</td>
-                <td>{{ f[3] or '-' }}</td>
-                <td>{{ f[4] or '-' }}</td>
-                <td>{{ f[5].strftime('%d/%m/%Y') if f[5] else '-' }}</td>
-                <td>
-                    {% if f[6] %}
-                        ✅ Ativo
-                    {% else %}
-                        ❌ Inativo
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>Nenhum funcionário cadastrado.</p>
-    {% endif %}
-</div>
-{% endblock %}
