@@ -98,6 +98,23 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/usuarios")
+def usuarios():
+    if "user_id" not in session or session.get("role") != "admin":
+        return redirect(url_for("dashboard"))
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nome, username, role FROM users ORDER BY nome")
+    usuarios = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template("usuarios.html", usuarios=usuarios)
+
+
+
+
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
