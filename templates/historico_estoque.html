@@ -10,7 +10,7 @@
 <div class="content-wrapper">
     <h2>📉 Histórico de Movimentação</h2>
 
-    <table class="styled-table">
+    <table class="table">
         <thead>
             <tr>
                 <th>Tipo</th>
@@ -21,14 +21,22 @@
         <tbody>
             {% for h in historico %}
             <tr>
+                <td>
+                    {% if h[0] == 'entrada' %}
+                        <span class="badge badge-green">Entrada</span>
+                    {% elif h[0] == 'saida' %}
+                        <span class="badge badge-red">Saída</span>
+                    {% else %}
+                        <span class="badge badge-blue">Ajuste</span>
+                    {% endif %}
+                </td>
                 <td>{{ h[1] }}</td>
-                <td>{{ h[2] }}</td>
                 <td>{{ h[2].strftime('%d/%m/%Y %H:%M') }}</td>
-
             </tr>
             {% endfor %}
         </tbody>
-    </table>
+</table>
+
 
     <br>
     <a href="{{ url_for('estoque') }}">⬅ Voltar</a>
