@@ -67,6 +67,25 @@ try:
 except Exception as e:
     print("Erro ao iniciar banco:", e)
 
+# ================= USUÁRIOS =================
+@app.route('/usuarios')
+def usuarios():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    if session.get('role') != 'admin':
+        return redirect(url_for('dashboard'))
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT id, nome, username, role FROM users ORDER BY nome")
+    usuarios = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    return render_template('usuarios.html', usuarios=usuarios)
+
+
 # ================= LOGIN =================
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/login', methods=['GET', 'POST'])
