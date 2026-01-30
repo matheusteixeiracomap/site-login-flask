@@ -4,10 +4,11 @@ import psycopg2
 import os
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "super_secret_key")
+app.secret_key = os.environ.get("SECRET_KEY", "chave_super_secreta")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# ================= BANCO =================
 def get_db():
     return psycopg2.connect(DATABASE_URL)
 
@@ -44,17 +45,24 @@ def init_db():
             estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
             tipo TEXT NOT NULL,
             quantidade INTEGER NOT NULL,
+            usuario_destino INTEGER REFERENCES users(id),
+            usuario_registro INTEGER REFERENCES users(id),
             data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
 
     # ADMIN PADRÃO
-    cur.execute("SELECT 1 FROM users WHERE username = 'admin'")
+    cur.execute("SELECT 1 FROM users WHERE username=%s", ('admin',))
     if not cur.fetchone():
         cur.execute("""
             INSERT INTO users (nome, username, senha, role)
             VALUES (%s, %s, %s, %s)
-        """, ('Administrador', 'admin', generate_password_hash('admin123'), 'admin'))
+        """, (
+            'Administrador',
+            'admin',
+            generate_password_hash('admin123'),
+            'admin'
+        ))
 
     conn.commit()
     cur.close()
@@ -75,7 +83,10 @@ def login():
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute("SELECT id, nome, senha, role FROM users WHERE username=%s", (username,))
+        cur.execute(
+            "SELECT id, nome, senha, role FROM users WHERE username=%s",
+            (username,)
+        )
         user = cur.fetchone()
         cur.close()
         conn.close()
@@ -105,44 +116,67 @@ def usuarios():
 
     conn = get_db()
     cur = conn.cursor()
+
     error = success = None
+    search = request.args.get('search', '')
 
     if request.args.get('delete'):
         uid = request.args.get('delete')
         cur.execute("SELECT role FROM users WHERE id=%s", (uid,))
         if cur.fetchone()[0] == 'admin':
-            error = "Não pode excluir o admin"
+            error = "Não é permitido excluir o admin"
         else:
             cur.execute("DELETE FROM users WHERE id=%s", (uid,))
             conn.commit()
             success = "Usuário excluído"
 
     if request.method == 'POST':
-        if request.form['senha'] != request.form['confirmar']:
-            error = "Senhas não conferem"
+        nome = request.form['nome']
+        username = request.form['username']
+        senha = request.form['senha']
+        confirmar = request.form['confirmar_senha']
+        role = request.form['role']
+
+        if senha != confirmar:
+            error = "As senhas não conferem"
         else:
             try:
                 cur.execute("""
                     INSERT INTO users (nome, username, senha, role)
-                    VALUES (%s,%s,%s,%s)
-                """, (
-                    request.form['nome'],
-                    request.form['username'],
-                    generate_password_hash(request.form['senha']),
-                    request.form['role']
-                ))
+                    VALUES (%s, %s, %s, %s)
+                """, (nome, username, generate_password_hash(senha), role))
                 conn.commit()
                 success = "Usuário cadastrado"
-            except:
+            except psycopg2.errors.UniqueViolation:
                 conn.rollback()
                 error = "Usuário já existe"
 
-    cur.execute("SELECT id, nome, username, role FROM users ORDER BY id")
+    if search:
+        cur.execute("""
+            SELECT id, nome, username, role
+            FROM users
+            WHERE nome ILIKE %s OR username ILIKE %s
+            ORDER BY nome
+        """, (f"%{search}%", f"%{search}%"))
+    else:
+        cur.execute("SELECT id, nome, username, role FROM users ORDER BY nome")
+
     usuarios = cur.fetchall()
+
+    cur.execute("SELECT COUNT(*) FROM users")
+    total = cur.fetchone()[0]
 
     cur.close()
     conn.close()
-    return render_template('usuarios.html', usuarios=usuarios, error=error, success=success)
+
+    return render_template(
+        'usuarios.html',
+        usuarios=usuarios,
+        total=total,
+        error=error,
+        success=success,
+        search=search
+    )
 
 # ================= ESTOQUE =================
 @app.route('/estoque', methods=['GET', 'POST'])
@@ -156,22 +190,26 @@ def estoque():
     if request.method == 'POST':
         cur.execute("""
             INSERT INTO estoque (produto, categoria, quantidade, minimo)
-            VALUES (%s,%s,%s,%s)
+            VALUES (%s, %s, %s, %s)
         """, (
             request.form['produto'],
             request.form['categoria'],
-            request.form['quantidade'],
-            request.form['minimo']
+            int(request.form['quantidade']),
+            int(request.form['minimo'])
         ))
         conn.commit()
 
-    cur.execute("SELECT * FROM estoque ORDER BY produto")
+    cur.execute("""
+        SELECT id, produto, categoria, quantidade, minimo
+        FROM estoque ORDER BY produto
+    """)
     itens = cur.fetchall()
 
     cur.close()
     conn.close()
     return render_template('estoque.html', itens=itens)
 
+# ================= EDITAR / SAÍDA =================
 @app.route('/estoque/editar/<int:id>', methods=['GET', 'POST'])
 def editar_produto(id):
     if 'user_id' not in session:
@@ -180,43 +218,83 @@ def editar_produto(id):
     conn = get_db()
     cur = conn.cursor()
 
+    cur.execute("SELECT * FROM estoque WHERE id=%s", (id,))
+    item = cur.fetchone()
+
+    cur.execute("SELECT id, nome FROM users ORDER BY nome")
+    usuarios = cur.fetchall()
+
     if request.method == 'POST':
-        cur.execute("SELECT quantidade FROM estoque WHERE id=%s", (id,))
-        old = cur.fetchone()[0]
+        if request.form.get('acao') == 'saida':
+            qtd = int(request.form['quantidade_saida'])
+            destino = int(request.form['usuario_destino'])
 
-        qtd = int(request.form['quantidade'])
-        cur.execute("""
-            UPDATE estoque SET produto=%s, categoria=%s, quantidade=%s, minimo=%s
-            WHERE id=%s
-        """, (
-            request.form['produto'],
-            request.form['categoria'],
-            qtd,
-            request.form['minimo'],
-            id
-        ))
-
-        diff = qtd - old
-        if diff != 0:
             cur.execute("""
-                INSERT INTO estoque_mov (estoque_id, tipo, quantidade)
-                VALUES (%s,'ajuste',%s)
-            """, (id, diff))
+                UPDATE estoque SET quantidade = quantidade - %s WHERE id=%s
+            """, (qtd, id))
+
+            cur.execute("""
+                INSERT INTO estoque_mov
+                (estoque_id, tipo, quantidade, usuario_destino, usuario_registro)
+                VALUES (%s, 'saida', %s, %s, %s)
+            """, (id, qtd, destino, session['user_id']))
+
+        else:
+            cur.execute("""
+                UPDATE estoque
+                SET produto=%s, categoria=%s, quantidade=%s, minimo=%s
+                WHERE id=%s
+            """, (
+                request.form['produto'],
+                request.form['categoria'],
+                int(request.form['quantidade']),
+                int(request.form['minimo']),
+                id
+            ))
 
         conn.commit()
         cur.close()
         conn.close()
         return redirect(url_for('estoque'))
 
-    cur.execute("SELECT * FROM estoque WHERE id=%s", (id,))
-    item = cur.fetchone()
+    cur.close()
+    conn.close()
+    return render_template('editar_estoque.html', item=item, usuarios=usuarios)
+
+# ================= HISTÓRICO =================
+@app.route('/estoque/historico/<int:id>')
+def historico_estoque(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT
+            m.tipo,
+            m.quantidade,
+            u.nome,
+            ur.nome,
+            m.data
+        FROM estoque_mov m
+        LEFT JOIN users u ON u.id = m.usuario_destino
+        LEFT JOIN users ur ON ur.id = m.usuario_registro
+        WHERE m.estoque_id=%s
+        ORDER BY m.data DESC
+    """, (id,))
+    historico = cur.fetchall()
 
     cur.close()
     conn.close()
-    return render_template('editar_estoque.html', item=item)
+    return render_template('historico_estoque.html', historico=historico)
 
+# ================= EXCLUIR =================
 @app.route('/estoque/excluir/<int:id>')
 def excluir_produto(id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
     conn = get_db()
     cur = conn.cursor()
     cur.execute("DELETE FROM estoque WHERE id=%s", (id,))
@@ -224,21 +302,6 @@ def excluir_produto(id):
     cur.close()
     conn.close()
     return redirect(url_for('estoque'))
-
-@app.route('/estoque/historico/<int:id>')
-def historico_estoque(id):
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT tipo, quantidade, data
-        FROM estoque_mov
-        WHERE estoque_id=%s
-        ORDER BY data DESC
-    """, (id,))
-    hist = cur.fetchall()
-    cur.close()
-    conn.close()
-    return render_template('historico_estoque.html', historico=hist)
 
 # ================= LOGOUT =================
 @app.route('/logout')
