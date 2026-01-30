@@ -74,8 +74,6 @@ def init_db():
     cur.close()
     conn.close()
 
-
-
 init_db()
 
 # ================= LOGIN =================
@@ -103,6 +101,7 @@ def login():
 
     return render_template("login.html")
 
+# ================= USUÁRIOS =================
 @app.route("/usuarios")
 def usuarios():
     if "user_id" not in session or session.get("role") != "admin":
@@ -116,9 +115,6 @@ def usuarios():
     conn.close()
 
     return render_template("usuarios.html", usuarios=usuarios)
-
-
-
 
 # ================= DASHBOARD =================
 @app.route("/dashboard")
@@ -141,7 +137,7 @@ def estoque():
         categoria = request.form["categoria"]
         quantidade = int(request.form["quantidade"])
         minimo = int(request.form["minimo"])
-        valor = request.form["valor"] or 0
+        valor = float(request.form["valor"]) if request.form["valor"] else 0
         fornecedor = request.form["fornecedor"]
 
         arquivo = request.files.get("nota_fiscal")
@@ -208,3 +204,6 @@ def funcionarios():
 def logout():
     session.clear()
     return redirect(url_for("login"))
+
+if __name__ == "__main__":
+    app.run(debug=True)
