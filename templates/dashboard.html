@@ -23,6 +23,9 @@
 
             <a href="{{ url_for('estoque') }}">📦 Estoque</a>
 
+            <a href="{{ url_for('funcionarios') }}">🧑‍💼 Funcionários</a>
+
+
 
             <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
@@ -34,7 +37,8 @@
 
         <!-- TOPBAR -->
         <header class="topbar">
-            <h1>Dashboard</h1>
+            <h1>Bem-vindo, {{ session.nome }}</h1>
+
         </header>
 
         <!-- CARDS -->
