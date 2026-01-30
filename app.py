@@ -56,6 +56,20 @@ def init_db():
         )
     """)
 
+    # FUNCIONÁRIOS
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS funcionarios (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL,
+            matricula TEXT UNIQUE,
+            cargo TEXT,
+            setor TEXT,
+            data_admissao DATE,
+            ativo BOOLEAN DEFAULT TRUE
+        )
+    """)
+
+
     # ADMIN PADRÃO
     cur.execute("SELECT 1 FROM users WHERE username = 'admin'")
     if not cur.fetchone():
@@ -311,6 +325,58 @@ def entrada_estoque():
     conn.close()
 
     return render_template("entrada_estoque.html", produtos=produtos)
+
+
+# ================= FUNCIONÁRIOS =================
+@app.route("/funcionarios", methods=["GET", "POST"])
+def funcionarios():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    error = success = None
+
+    # CADASTRAR
+    if request.method == "POST":
+        nome = request.form["nome"]
+        matricula = request.form["matricula"]
+        cargo = request.form["cargo"]
+        setor = request.form["setor"]
+        data_admissao = request.form["data_admissao"]
+
+        try:
+            cur.execute("""
+                INSERT INTO funcionarios
+                (nome, matricula, cargo, setor, data_admissao)
+                VALUES (%s,%s,%s,%s,%s)
+            """, (nome, matricula, cargo, setor, data_admissao))
+
+            conn.commit()
+            success = "Funcionário cadastrado com sucesso!"
+        except psycopg2.errors.UniqueViolation:
+            conn.rollback()
+            error = "Matrícula já cadastrada"
+
+    # LISTAR
+    cur.execute("""
+        SELECT id, nome, matricula, cargo, setor, data_admissao, ativo
+        FROM funcionarios
+        ORDER BY nome
+    """)
+    funcionarios = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        "funcionarios.html",
+        funcionarios=funcionarios,
+        error=error,
+        success=success
+    )
+
 
 
 # ================= LOGOUT =================
