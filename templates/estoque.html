@@ -81,7 +81,8 @@
                         <td>{{ item[2] }}</td>
                         <td>{{ item[3] }}</td>
                         <td>{{ item[4] }}</td>
-                        <td>R$ {{ '%.2f'|format(item[5] or 0) }}</td>
+                        <td>R$ {{ '%.2f'|format(item['valor'] or 0) }}</td>
+
                         <td>{{ item[6] or '-' }}</td>
                         <td>
                             <a href="{{ url_for('editar_estoque', id=item[0]) }}">✏️</a>
