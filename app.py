@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import psycopg2
 import psycopg2.extras
 import os
@@ -10,6 +11,11 @@ app.secret_key = os.environ.get("SECRET_KEY", "chave_super_secreta")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
+# ================= UPLOAD =================
+UPLOAD_FOLDER = "static/notas_fiscais"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
 # ================= BANCO =================
 def get_db():
     return psycopg2.connect(DATABASE_URL)
@@ -18,7 +24,6 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # USERS
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -29,7 +34,20 @@ def init_db():
         )
     """)
 
-    # FUNCIONÁRIOS
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS estoque (
+            id SERIAL PRIMARY KEY,
+            produto TEXT NOT NULL,
+            categoria TEXT,
+            quantidade INTEGER NOT NULL DEFAULT 0,
+            minimo INTEGER DEFAULT 0,
+            valor NUMERIC(10,2),
+            fornecedor TEXT,
+            nota_fiscal TEXT,
+            data DATE DEFAULT CURRENT_DATE
+        )
+    """)
+
     cur.execute("""
         CREATE TABLE IF NOT EXISTS funcionarios (
             id SERIAL PRIMARY KEY,
@@ -42,34 +60,6 @@ def init_db():
         )
     """)
 
-    # ESTOQUE
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS estoque (
-            id SERIAL PRIMARY KEY,
-            produto TEXT NOT NULL,
-            categoria TEXT,
-            quantidade INTEGER DEFAULT 0,
-            minimo INTEGER DEFAULT 0,
-            valor NUMERIC(10,2),
-            fornecedor TEXT,
-            nota_fiscal TEXT,
-            data DATE DEFAULT CURRENT_DATE
-        )
-    """)
-
-    # MOVIMENTAÇÃO DE ESTOQUE
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS estoque_mov (
-            id SERIAL PRIMARY KEY,
-            estoque_id INTEGER REFERENCES estoque(id) ON DELETE CASCADE,
-            tipo TEXT NOT NULL,
-            quantidade INTEGER NOT NULL,
-            usuario TEXT,
-            data TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    # ADMIN PADRÃO
     cur.execute("SELECT 1 FROM users WHERE username='admin'")
     if not cur.fetchone():
         cur.execute(
@@ -81,10 +71,7 @@ def init_db():
     cur.close()
     conn.close()
 
-try:
-    init_db()
-except Exception as e:
-    print("Erro ao iniciar banco:", e)
+init_db()
 
 # ================= LOGIN =================
 @app.route("/", methods=["GET", "POST"])
@@ -96,10 +83,7 @@ def login():
 
         conn = get_db()
         cur = conn.cursor()
-        cur.execute(
-            "SELECT id, nome, senha, role FROM users WHERE username=%s",
-            (username,)
-        )
+        cur.execute("SELECT id, nome, senha, role FROM users WHERE username=%s", (username,))
         user = cur.fetchone()
         cur.close()
         conn.close()
@@ -121,89 +105,6 @@ def dashboard():
         return redirect(url_for("login"))
     return render_template("dashboard.html")
 
-# ================= USUÁRIOS (ADMIN) =================
-@app.route("/usuarios", methods=["GET", "POST"])
-def usuarios():
-    if "user_id" not in session or session.get("role") != "admin":
-        return redirect(url_for("dashboard"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    error = success = None
-
-    if request.method == "POST":
-        nome = request.form["nome"]
-        username = request.form["username"]
-        senha = request.form["senha"]
-        role = request.form["role"]
-
-        try:
-            cur.execute(
-                "INSERT INTO users (nome, username, senha, role) VALUES (%s,%s,%s,%s)",
-                (nome, username, generate_password_hash(senha), role)
-            )
-            conn.commit()
-            success = "Usuário cadastrado com sucesso!"
-        except psycopg2.errors.UniqueViolation:
-            conn.rollback()
-            error = "Usuário já existe"
-
-    cur.execute("SELECT id, nome, username, role FROM users ORDER BY nome")
-    usuarios = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template("usuarios.html", usuarios=usuarios, error=error, success=success)
-
-# ================= FUNCIONÁRIOS =================
-@app.route("/funcionarios", methods=["GET", "POST"])
-def funcionarios():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = get_db()
-    cur = conn.cursor()
-
-    error = success = None
-
-    if request.method == "POST":
-        nome = request.form["nome"]
-        matricula = request.form["matricula"]
-        cargo = request.form["cargo"]
-        setor = request.form["setor"]
-        data_admissao = request.form["data_admissao"]
-
-        try:
-            cur.execute("""
-                INSERT INTO funcionarios
-                (nome, matricula, cargo, setor, data_admissao)
-                VALUES (%s,%s,%s,%s,%s)
-            """, (nome, matricula, cargo, setor, data_admissao))
-            conn.commit()
-            success = "Funcionário cadastrado com sucesso!"
-        except psycopg2.errors.UniqueViolation:
-            conn.rollback()
-            error = "Matrícula já cadastrada"
-
-    cur.execute("""
-        SELECT id, nome, matricula, cargo, setor, data_admissao, ativo
-        FROM funcionarios
-        ORDER BY nome
-    """)
-    funcionarios = cur.fetchall()
-
-    cur.close()
-    conn.close()
-
-    return render_template(
-        "funcionarios.html",
-        funcionarios=funcionarios,
-        error=error,
-        success=success
-    )
-
 # ================= ESTOQUE =================
 @app.route("/estoque", methods=["GET", "POST"])
 def estoque():
@@ -211,22 +112,29 @@ def estoque():
         return redirect(url_for("login"))
 
     conn = get_db()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     if request.method == "POST":
+        produto = request.form["produto"]
+        categoria = request.form["categoria"]
+        quantidade = int(request.form["quantidade"])
+        minimo = int(request.form["minimo"])
+        valor = request.form["valor"] or 0
+        fornecedor = request.form["fornecedor"]
+
+        arquivo = request.files.get("nota_fiscal")
+        nome_arquivo = None
+
+        if arquivo and arquivo.filename:
+            nome_arquivo = secure_filename(arquivo.filename)
+            arquivo.save(os.path.join(app.config["UPLOAD_FOLDER"], nome_arquivo))
+
         cur.execute("""
             INSERT INTO estoque
             (produto, categoria, quantidade, minimo, valor, fornecedor, nota_fiscal)
             VALUES (%s,%s,%s,%s,%s,%s,%s)
-        """, (
-            request.form["produto"],
-            request.form["categoria"],
-            request.form["quantidade"],
-            request.form["minimo"],
-            request.form["valor"],
-            request.form["fornecedor"],
-            request.form["nota_fiscal"]
-        ))
+        """, (produto, categoria, quantidade, minimo, valor, fornecedor, nome_arquivo))
+
         conn.commit()
 
     cur.execute("SELECT * FROM estoque ORDER BY produto")
@@ -237,27 +145,41 @@ def estoque():
 
     return render_template("estoque.html", itens=itens)
 
-# ================= HISTÓRICO ESTOQUE =================
-@app.route("/estoque/historico/<int:id>")
-def historico_estoque(id):
+# ================= FUNCIONÁRIOS =================
+@app.route("/funcionarios", methods=["GET", "POST"])
+def funcionarios():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     conn = get_db()
     cur = conn.cursor()
+    error = success = None
 
-    cur.execute("""
-        SELECT tipo, quantidade, usuario, data
-        FROM estoque_mov
-        WHERE estoque_id=%s
-        ORDER BY data DESC
-    """, (id,))
-    historico = cur.fetchall()
+    if request.method == "POST":
+        try:
+            cur.execute("""
+                INSERT INTO funcionarios (nome, matricula, cargo, setor, data_admissao)
+                VALUES (%s,%s,%s,%s,%s)
+            """, (
+                request.form["nome"],
+                request.form["matricula"],
+                request.form["cargo"],
+                request.form["setor"],
+                request.form["data_admissao"]
+            ))
+            conn.commit()
+            success = "Funcionário cadastrado com sucesso!"
+        except psycopg2.errors.UniqueViolation:
+            conn.rollback()
+            error = "Matrícula já cadastrada"
+
+    cur.execute("SELECT * FROM funcionarios ORDER BY nome")
+    funcionarios = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    return render_template("historico_estoque.html", historico=historico)
+    return render_template("funcionarios.html", funcionarios=funcionarios, error=error, success=success)
 
 # ================= LOGOUT =================
 @app.route("/logout")

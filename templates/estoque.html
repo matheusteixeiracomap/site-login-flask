@@ -2,64 +2,45 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Usuários</title>
+    <title>Estoque</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body>
-    <div class="dashboard-container">
-        <!-- SIDEBAR -->
+<body class="dashboard">
+
+<div class="dashboard-container">
+
     <aside class="sidebar">
         <h2>Sistema</h2>
         <nav>
             <a href="{{ url_for('dashboard') }}">🏠 Dashboard</a>
-
-            {% if session.role == 'admin' %}
-                <a href="{{ url_for('usuarios') }}">👤 Usuários</a>
-
-            {% endif %}
-
             <a href="{{ url_for('estoque') }}">📦 Estoque</a>
-
             <a href="{{ url_for('funcionarios') }}">💼 Funcionários</a>
-
-
-
             <a href="{{ url_for('logout') }}" class="logout">🚪 Sair</a>
         </nav>
     </aside>
-    
-    <!-- CONTEÚDO -->
+
     <main class="content">
-
-        {% block title %}Estoque{% endblock %}
-
-        {% block content %}
         <h1>📦 Estoque</h1>
 
-        <!-- FORMULÁRIO DE CADASTRO -->
+        <!-- CADASTRO -->
         <div class="panel">
             <h2>➕ Cadastro de Produto</h2>
 
-            <form method="post" class="form-grid">
-                <input type="text" name="produto" placeholder="Produto" required>
-                <input type="text" name="categoria" placeholder="Categoria">
-
-                <input type="number" name="quantidade" placeholder="Quantidade inicial" required>
-                <input type="number" name="minimo" placeholder="Estoque mínimo" value="0">
-
-                <input type="number" step="0.01" name="valor" placeholder="Valor unitário">
-                <input type="text" name="fornecedor" placeholder="Fornecedor">
-                <input type="text" name="nota_fiscal" placeholder="Nota Fiscal">
-
-                <button type="submit">Salvar Produto</button>
+            <form method="post" enctype="multipart/form-data" class="form-grid">
+                <input name="produto" placeholder="Produto" required>
+                <input name="categoria" placeholder="Categoria">
+                <input type="number" name="quantidade" placeholder="Quantidade" required>
+                <input type="number" name="minimo" placeholder="Mínimo" value="0">
+                <input type="number" step="0.01" name="valor" placeholder="Valor">
+                <input name="fornecedor" placeholder="Fornecedor">
+                <input type="file" name="nota_fiscal" accept="image/*,application/pdf">
+                <button type="submit">Salvar</button>
             </form>
         </div>
 
-        <hr>
-
-        <!-- LISTA DE PRODUTOS -->
+        <!-- LISTA -->
         <div class="panel">
-            <h2>📋 Produtos Cadastrados</h2>
+            <h2>📋 Produtos</h2>
 
             {% if itens %}
             <table class="table">
@@ -67,22 +48,31 @@
                     <tr>
                         <th>Produto</th>
                         <th>Categoria</th>
-                        <th>Quantidade</th>
-                        <th>Mínimo</th>
+                        <th>Qtd</th>
+                        <th>Mín</th>
                         <th>Valor</th>
                         <th>Fornecedor</th>
-                        
+                        <th>Nota Fiscal</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in itens %}
-                    <tr class="{% if item[3] <= item[4] %}alerta{% endif %}">
-                        <td>{{ item[1] }}</td>
-                        <td>{{ item[2] }}</td>
-                        <td>{{ item[3] }}</td>
-                        <td>{{ item[4] }}</td>
-                        <td>R$ {{ '%.2f'|format(item['valor'] or 0) }}</td>
-                        <td>{{ item[6] or '-' }}</td>
+                    <tr class="{% if item.quantidade <= item.minimo %}alerta{% endif %}">
+                        <td>{{ item.produto }}</td>
+                        <td>{{ item.categoria or '-' }}</td>
+                        <td>{{ item.quantidade }}</td>
+                        <td>{{ item.minimo }}</td>
+                        <td>R$ {{ '%.2f'|format(item.valor or 0) }}</td>
+                        <td>{{ item.fornecedor or '-' }}</td>
+                        <td>
+                            {% if item.nota_fiscal %}
+                                <a href="{{ url_for('static', filename='notas_fiscais/' ~ item.nota_fiscal) }}" target="_blank">
+                                    📎 Ver
+                                </a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -91,5 +81,8 @@
                 <p>Nenhum produto cadastrado.</p>
             {% endif %}
         </div>
-        {% endblock %}
-    </main>       
+    </main>
+</div>
+
+</body>
+</html>
