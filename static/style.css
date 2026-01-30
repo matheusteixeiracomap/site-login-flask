@@ -40,7 +40,6 @@ body.login {
     margin-bottom: 12px;
     border-radius: 8px;
     border: 1px solid #ddd;
-    font-size: 14px;
 }
 
 .login-container input:focus {
@@ -55,32 +54,15 @@ body.login {
     color: white;
     border: none;
     border-radius: 8px;
-    font-size: 15px;
     cursor: pointer;
-    transition: 0.3s;
 }
 
 .login-container button:hover {
     background: #4338ca;
 }
 
-.link {
-    text-align: center;
-    margin-top: 15px;
-}
-
-.link a {
-    text-decoration: none;
-    color: #4f46e5;
-    font-size: 14px;
-}
-
-.link a:hover {
-    text-decoration: underline;
-}
-
 /* =========================
-   DASHBOARD
+   DASHBOARD LAYOUT
 ========================= */
 body.dashboard {
     background: #f4f6f9;
@@ -91,7 +73,9 @@ body.dashboard {
     min-height: 100vh;
 }
 
-/* SIDEBAR */
+/* =========================
+   SIDEBAR
+========================= */
 .sidebar {
     width: 230px;
     background: #1e1e2f;
@@ -105,11 +89,11 @@ body.dashboard {
 
 .sidebar nav a {
     display: block;
+    padding: 10px 12px;
+    margin-bottom: 6px;
     color: #ddd;
     text-decoration: none;
-    margin-bottom: 15px;
-    padding: 8px;
-    border-radius: 5px;
+    border-radius: 6px;
 }
 
 .sidebar nav a:hover {
@@ -120,21 +104,21 @@ body.dashboard {
     color: #ff6b6b;
 }
 
-/* CONTEÚDO */
+/* =========================
+   CONTEÚDO
+========================= */
 .content {
     flex: 1;
     padding: 20px;
 }
 
-/* TOPBAR */
 .topbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
-/* CARDS */
+/* =========================
+   CARDS
+========================= */
 .cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -146,394 +130,13 @@ body.dashboard {
     background: white;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     text-align: center;
-}
-
-.card h3 {
-    margin-bottom: 10px;
-    color: #555;
-}
-
-.card p {
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-}
-
-/* PAINEL */
-.panel {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 /* =========================
-   ALERTAS (LOGIN / DASHBOARD)
+   PAINEL
 ========================= */
-.alert {
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-size: 14px;
-}
-
-.alert.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-}
-
-.alert.success {
-    background: #ddffdd;
-    color: #006600;
-}
-/* ===== PÁGINAS CENTRALIZADAS (LOGIN / REGISTER) ===== */
-.page-center {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
-}
-
-/* ===== FORM CONTAINER ===== */
-.form-container {
-    background: #ffffff;
-    padding: 30px;
-    width: 100%;
-    max-width: 400px;
-    border-radius: 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-}
-
-.form-container h2 {
-    text-align: center;
-    margin-bottom: 5px;
-    color: #333;
-}
-
-.subtitle {
-    text-align: center;
-    font-size: 14px;
-    color: #777;
-    margin-bottom: 20px;
-}
-
-/* INPUTS */
-.form-container input,
-.form-container select {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    font-size: 14px;
-}
-
-.form-container input:focus,
-.form-container select:focus {
-    outline: none;
-    border-color: #6366f1;
-}
-
-/* BOTÃO */
-.form-container button {
-    width: 100%;
-    padding: 12px;
-    background: #4f46e5;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 15px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.form-container button:hover {
-    background: #4338ca;
-}
-
-/* ALERTAS */
-.alert {
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-    text-align: center;
-    font-size: 14px;
-}
-
-.alert.error {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 1px solid #fecaca;
-}
-
-.alert.success {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #86efac;
-}
-
-/* LINK VOLTAR */
-.back-link {
-    display: block;
-    text-align: center;
-    margin-top: 15px;
-    text-decoration: none;
-    color: #4f46e5;
-    font-size: 14px;
-}
-
-.back-link:hover {
-    text-decoration: underline;
-}
-.user-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 30px;
-}
-
-.user-table th,
-.user-table td {
-    border: 1px solid #ddd;
-    padding: 10px;
-    text-align: left;
-}
-
-.user-table th {
-    background: #f4f6f9;
-}
-
-.user-table tr:nth-child(even) {
-    background: #fafafa;
-}
-/* ===== LAYOUT ===== */
-.content-wrapper {
-    max-width: 1000px;
-    margin: auto;
-    padding: 30px;
-}
-
-/* HEADER */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-}
-
-.page-header h2 {
-    color: #333;
-}
-
-/* BOTÕES */
-.btn-primary {
-    background: #4f46e5;
-    color: #fff;
-    border: none;
-    padding: 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-.btn-primary:hover {
-    background: #4338ca;
-}
-
-.btn-secondary {
-    background: #e5e7eb;
-    color: #333;
-    padding: 8px 12px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-/* CARD */
-.card-box {
-    background: #ffffff;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    margin-bottom: 30px;
-}
-
-.card-box h3 {
-    margin-bottom: 15px;
-    color: #444;
-}
-
-/* TABELA */
-.styled-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.styled-table thead {
-    background: #f4f6f9;
-}
-
-.styled-table th,
-.styled-table td {
-    padding: 12px;
-    text-align: left;
-}
-
-.styled-table tbody tr {
-    border-bottom: 1px solid #eee;
-    transition: 0.2s;
-}
-
-.styled-table tbody tr:hover {
-    background: #f9fafb;
-}
-
-/* BADGES */
-.badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.badge.admin {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.badge.user {
-    background: #dcfce7;
-    color: #166534;
-}
-
-/* FORM GRID */
-.grid-form {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 12px;
-}
-
-.grid-form input,
-.grid-form select {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-}
-
-.grid-form input:focus,
-.grid-form select:focus {
-    outline: none;
-    border-color: #6366f1;
-}
-/* CONTADOR */
-.stats-card {
-    background: linear-gradient(135deg, #4f46e5, #6366f1);
-    color: #fff;
-    padding: 20px;
-    border-radius: 12px;
-    margin-bottom: 25px;
-}
-
-.stats-card p {
-    font-size: 32px;
-    font-weight: bold;
-}
-
-/* BUSCA */
-.search-box {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.search-box input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-}
-
-.search-box button {
-    padding: 10px 15px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    background: #4f46e5;
-    color: white;
-}
-
-/* DELETE */
-.btn-delete {
-    color: #dc2626;
-    font-size: 18px;
-    text-decoration: none;
-}
-
-.btn-delete:hover {
-    color: #991b1b;
-}
-.powerbi-container {
-    position: relative;
-    width: 100%;
-    padding-bottom: 56.25%;
-    height: 0;
-    overflow: hidden;
-    border-radius: 12px;
-}
-
-.powerbi-container iframe {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    border: none;
-}
-.low-stock {
-    background: #fff1f2;
-}
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.table th {
-    background: #f4f6f9;
-    padding: 12px;
-    text-align: left;
-}
-
-.table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.badge {
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.badge-green {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.badge-red {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.badge-blue {
-    background: #dbeafe;
-    color: #1e40af;
-}
 .panel {
     background: #fff;
     padding: 20px;
@@ -542,6 +145,29 @@ body.dashboard {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+/* =========================
+   ALERTAS
+========================= */
+.alert {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.alert.error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.alert.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+/* =========================
+   FORMULÁRIOS
+========================= */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -564,33 +190,77 @@ body.dashboard {
     cursor: pointer;
 }
 
+.form-grid button:hover {
+    background: #4338ca;
+}
+
+/* =========================
+   TABELAS
+========================= */
 .table {
     width: 100%;
     border-collapse: collapse;
-}
-
-.table th, .table td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
+    margin-top: 20px;
 }
 
 .table th {
-    background: #f4f4f4;
+    background: #f4f6f9;
+    padding: 12px;
 }
 
-.alerta {
-    background: #fff3cd;
+.table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
 }
-.sidebar nav a {
-    display: block;
-    padding: 10px 12px;
-    margin-bottom: 6px;
-    text-decoration: none;
-}
-button {
-    font-size: 16px;
+
+/* =========================
+   BADGES
+========================= */
+.badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
     font-weight: bold;
-    border-radius: 8px;
 }
 
+.badge-green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge-red {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* =========================
+   POWER BI
+========================= */
+.powerbi-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.powerbi-container iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* =========================
+   ESTOQUE
+========================= */
+.low-stock {
+    background: #fff1f2;
+}
