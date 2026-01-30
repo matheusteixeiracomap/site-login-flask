@@ -493,4 +493,7 @@ body.dashboard {
     height: 100%;
     border: none;
 }
+.low-stock {
+    background: #fff1f2;
+}
 

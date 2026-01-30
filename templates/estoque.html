@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="content-wrapper">
+
+    <div class="page-header">
+        <h2>📦 Controle de Estoque</h2>
+        <a href="{{ url_for('dashboard') }}" class="btn-secondary">⬅ Dashboard</a>
+    </div>
+
+    {% if error %}
+        <div class="alert error">{{ error }}</div>
+    {% endif %}
+    {% if success %}
+        <div class="alert success">{{ success }}</div>
+    {% endif %}
+
+    <!-- LISTA -->
+    <div class="card-box">
+        <h3>Itens em estoque</h3>
+
+        <table class="styled-table">
+            <thead>
+                <tr>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Quantidade</th>
+                    <th>Mínimo</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for i in itens %}
+                <tr class="{% if i[3] <= i[4] %}low-stock{% endif %}">
+                    <td>{{ i[1] }}</td>
+                    <td>{{ i[2] or '-' }}</td>
+                    <td>{{ i[3] }}</td>
+                    <td>{{ i[4] }}</td>
+                    <td>
+                        {% if i[3] <= i[4] %}
+                            <span class="badge admin">Baixo</span>
+                        {% else %}
+                            <span class="badge user">OK</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- CADASTRO -->
+    <div class="card-box">
+        <h3>➕ Cadastrar produto</h3>
+
+        <form method="POST" class="grid-form">
+            <input type="text" name="produto" placeholder="Nome do produto" required>
+            <input type="text" name="categoria" placeholder="Categoria">
+            <input type="number" name="quantidade" placeholder="Quantidade" required>
+            <input type="number" name="minimo" placeholder="Estoque mínimo" required>
+
+            <button type="submit" class="btn-primary">Cadastrar</button>
+        </form>
+    </div>
+
+</div>
+
+</body>
+</html>

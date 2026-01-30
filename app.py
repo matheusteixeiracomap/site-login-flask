@@ -16,14 +16,16 @@ def init_db():
     cur = conn.cursor()
 
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+        CREATE TABLE IF NOT EXISTS estoque (
             id SERIAL PRIMARY KEY,
-            nome TEXT NOT NULL,
-            username TEXT UNIQUE NOT NULL,
-            senha TEXT NOT NULL,
-            role TEXT NOT NULL
+            produto TEXT NOT NULL,
+            categoria TEXT,
+            quantidade INTEGER NOT NULL,
+            minimo INTEGER NOT NULL,
+            data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
+
 
     cur.execute("SELECT 1 FROM users WHERE username = %s", ('admin',))
     if not cur.fetchone():
@@ -160,6 +162,54 @@ def usuarios():
         search=search
     )
 
+@app.route('/estoque', methods=['GET', 'POST'])
+def estoque():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    conn = get_db()
+    cur = conn.cursor()
+
+    error = None
+    success = None
+
+    # ➕ CADASTRAR PRODUTO
+    if request.method == 'POST':
+        produto = request.form.get('produto')
+        categoria = request.form.get('categoria')
+        quantidade = request.form.get('quantidade')
+        minimo = request.form.get('minimo')
+
+        if not produto or not quantidade or not minimo:
+            error = "Preencha os campos obrigatórios"
+        else:
+            cur.execute(
+                """
+                INSERT INTO estoque (produto, categoria, quantidade, minimo)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (produto, categoria, quantidade, minimo)
+            )
+            conn.commit()
+            success = "Produto cadastrado com sucesso!"
+
+    # 📋 LISTAR ESTOQUE
+    cur.execute("""
+        SELECT id, produto, categoria, quantidade, minimo
+        FROM estoque
+        ORDER BY produto
+    """)
+    itens = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return render_template(
+        'estoque.html',
+        itens=itens,
+        error=error,
+        success=success
+    )
 
 
 # ================= LOGOUT =================
