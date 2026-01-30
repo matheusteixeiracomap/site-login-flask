@@ -115,6 +115,14 @@ def login():
 
     return render_template("login.html")
 
+
+@app.route('/funcionarios', methods=['GET', 'POST'])
+def funcionarios():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    return render_template('funcionarios.html')
+
 # ================= DASHBOARD =================
 @app.route("/dashboard")
 def dashboard():
