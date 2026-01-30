@@ -582,4 +582,15 @@ body.dashboard {
 .alerta {
     background: #fff3cd;
 }
+.sidebar nav a {
+    display: block;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    text-decoration: none;
+}
+button {
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+}
 
