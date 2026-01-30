@@ -71,7 +71,7 @@
                         <th>Mínimo</th>
                         <th>Valor</th>
                         <th>Fornecedor</th>
-                        <th>Ações</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
@@ -82,12 +82,7 @@
                         <td>{{ item[3] }}</td>
                         <td>{{ item[4] }}</td>
                         <td>R$ {{ '%.2f'|format(item['valor'] or 0) }}</td>
-
                         <td>{{ item[6] or '-' }}</td>
-                        <td>
-                            <a href="{{ url_for('editar_estoque', id=item[0]) }}">✏️</a>
-                            <a href="{{ url_for('historico_estoque', id=item[0]) }}">📉</a>
-                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
