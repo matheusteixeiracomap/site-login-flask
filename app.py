@@ -4,7 +4,6 @@ from werkzeug.utils import secure_filename
 import psycopg2
 import psycopg2.extras
 import os
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "chave_super_secreta")
@@ -24,7 +23,7 @@ def init_db():
     conn = get_db()
     cur = conn.cursor()
 
-    # Cria tabela users
+    # Tabela users
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -35,7 +34,7 @@ def init_db():
         )
     """)
 
-    # Cria tabela estoque com a coluna valor
+    # Tabela estoque
     cur.execute("""
         CREATE TABLE IF NOT EXISTS estoque (
             id SERIAL PRIMARY KEY,
@@ -49,7 +48,7 @@ def init_db():
         )
     """)
 
-    # Cria tabela funcionarios
+    # Tabela funcionarios
     cur.execute("""
         CREATE TABLE IF NOT EXISTS funcionarios (
             id SERIAL PRIMARY KEY,
@@ -62,13 +61,13 @@ def init_db():
         )
     """)
 
-    # Cria admin se não existir
+    # Admin padrão
     cur.execute("SELECT 1 FROM users WHERE username='admin'")
     if not cur.fetchone():
-        cur.execute(
-            "INSERT INTO users (nome, username, senha, role) VALUES (%s,%s,%s,%s)",
-            ("Administrador", "admin", generate_password_hash("admin123"), "admin")
-        )
+        cur.execute("""
+            INSERT INTO users (nome, username, senha, role)
+            VALUES (%s,%s,%s,%s)
+        """, ("Administrador", "admin", generate_password_hash("admin123"), "admin"))
 
     conn.commit()
     cur.close()
@@ -81,8 +80,8 @@ init_db()
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
-        senha = request.form["senha"]
+        username = request.form.get("username")
+        senha = request.form.get("senha")
 
         conn = get_db()
         cur = conn.cursor()
@@ -101,6 +100,13 @@ def login():
 
     return render_template("login.html")
 
+# ================= DASHBOARD =================
+@app.route("/dashboard")
+def dashboard():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    return render_template("dashboard.html")
+
 # ================= USUÁRIOS =================
 @app.route("/usuarios")
 def usuarios():
@@ -116,13 +122,6 @@ def usuarios():
 
     return render_template("usuarios.html", usuarios=usuarios)
 
-# ================= DASHBOARD =================
-@app.route("/dashboard")
-def dashboard():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-    return render_template("dashboard.html")
-
 # ================= ESTOQUE =================
 @app.route("/estoque", methods=["GET", "POST"])
 def estoque():
@@ -133,12 +132,12 @@ def estoque():
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
     if request.method == "POST":
-        produto = request.form["produto"]
-        categoria = request.form["categoria"]
-        quantidade = int(request.form["quantidade"])
-        minimo = int(request.form["minimo"])
-        valor = float(request.form["valor"]) if request.form["valor"] else 0
-        fornecedor = request.form["fornecedor"]
+        produto = request.form.get("produto")
+        categoria = request.form.get("categoria")
+        quantidade = int(request.form.get("quantidade", 0))
+        minimo = int(request.form.get("minimo", 0))
+        valor = float(request.form.get("valor") or 0)
+        fornecedor = request.form.get("fornecedor")
 
         arquivo = request.files.get("nota_fiscal")
         nome_arquivo = None
@@ -179,15 +178,15 @@ def funcionarios():
                 INSERT INTO funcionarios (nome, matricula, cargo, setor, data_admissao)
                 VALUES (%s,%s,%s,%s,%s)
             """, (
-                request.form["nome"],
-                request.form["matricula"],
-                request.form["cargo"],
-                request.form["setor"],
-                request.form["data_admissao"]
+                request.form.get("nome"),
+                request.form.get("matricula"),
+                request.form.get("cargo"),
+                request.form.get("setor"),
+                request.form.get("data_admissao")
             ))
             conn.commit()
             success = "Funcionário cadastrado com sucesso!"
-        except psycopg2.errors.UniqueViolation:
+        except psycopg2.IntegrityError:
             conn.rollback()
             error = "Matrícula já cadastrada"
 
@@ -197,7 +196,12 @@ def funcionarios():
     cur.close()
     conn.close()
 
-    return render_template("funcionarios.html", funcionarios=funcionarios, error=error, success=success)
+    return render_template(
+        "funcionarios.html",
+        funcionarios=funcionarios,
+        error=error,
+        success=success
+    )
 
 # ================= LOGOUT =================
 @app.route("/logout")
